@@ -1,65 +1,122 @@
-import Image from "next/image";
+"use client";
+import { useState, useContext } from "react";
+import { UserContext } from "./layout";
+import Link from "next/link";
 
-export default function Home() {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+// 1. تعريف أنواع البيانات للمراحل
+interface Grade { id: number; name: string; icon: string; }
+interface Stages { primary: Grade[]; prep: Grade[]; }
+
+export default function HomePage() {
+  const { user, setUser } = useContext(UserContext) as any;
+  const [nameInput, setNameInput] = useState("");
+  const [codeInput, setCodeInput] = useState("");
+  const [error, setError] = useState("");
+  const [selectedStage, setSelectedStage] = useState<keyof Stages | null>(null);
+
+  // 2. قائمة أكواد الاشتراك (تستطيع تعديلها في أي وقت)
+  const VALID_CODES = ["MG2026", "WINNER", "PRO100"];
+
+  const stagesData: Stages = {
+    primary: [
+      { id: 1, name: "الصف الأول الابتدائي", icon: "🌱" },
+      { id: 2, name: "الصف الثاني الابتدائي", icon: "🎨" },
+      { id: 3, name: "الصف الثالث الابتدائي", icon: "🚀" },
+      { id: 4, name: "الصف الرابع الابتدائي", icon: "🔍" },
+      { id: 5, name: "الصف الخامس الابتدائي", icon: "🧪" },
+      { id: 6, name: "الصف السادس الابتدائي", icon: "🏆" },
+    ],
+    prep: [
+      { id: 7, name: "الصف الأول الإعدادي", icon: "📚" },
+      { id: 8, name: "الصف الثاني الإعدادي", icon: "💡" },
+      { id: 9, name: "الصف الثالث الإعدادي", icon: "🎯" },
+    ]
+  };
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (nameInput.length < 3) {
+      setError("يرجى كتابة اسمك بشكل صحيح");
+      return;
+    }
+    // التحقق من الكود
+    if (!VALID_CODES.includes(codeInput.toUpperCase())) {
+      setError("كود الاشتراك غير صحيح.. اطلبه من Mr. Mohamed");
+      return;
+    }
+    setUser(nameInput); // تسجيل الدخول بنجاح
+    setError("");
+  };
+
+  // --- الحالة الأولى: الطالب لم يسجل دخوله بعد ---
+  if (!user) {
+    return (
+      <div className="max-w-md mx-auto mt-20 p-8 bg-white rounded-[2.5rem] shadow-2xl border-t-8 border-blue-600">
+        <h1 className="text-2xl font-black text-center text-gray-800 mb-6">تسجيل دخول الطلاب 👨‍🎓</h1>
+        <form onSubmit={handleLogin} className="space-y-4">
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-1">اسمك بالكامل</label>
+            <input 
+              type="text" 
+              value={nameInput}
+              onChange={(e) => setNameInput(e.target.value)}
+              placeholder="اكتب اسمك هنا"
+              className="w-full p-4 rounded-xl border-2 border-gray-100 focus:border-blue-500 outline-none text-black"
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+          </div>
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-1">كود الاشتراك</label>
+            <input 
+              type="text" 
+              value={codeInput}
+              onChange={(e) => setCodeInput(e.target.value)}
+              placeholder="مثال: MG2026"
+              className="w-full p-4 rounded-xl border-2 border-gray-100 focus:border-blue-500 outline-none text-center font-bold text-blue-600"
+            />
+          </div>
+          {error && <p className="text-red-500 text-sm font-bold text-center">{error}</p>}
+          <button type="submit" className="w-full bg-blue-600 text-white p-4 rounded-xl font-black text-lg hover:bg-blue-700 transition shadow-lg">
+            دخول للمنصة
+          </button>
+        </form>
+      </div>
+    );
+  }
+
+  // --- الحالة الثانية: الطالب سجل دخوله وبانتظار اختيار المرحلة ---
+  return (
+    <div className="max-w-6xl mx-auto px-4 py-12 text-center">
+      <header className="mb-12">
+        <h1 className="text-4xl font-black text-gray-900 mb-4">أهلاً بك يا <span className="text-blue-600">{user}</span></h1>
+        <p className="text-xl text-gray-600">اختر مرحلتك الدراسية الآن</p>
+      </header>
+
+      {!selectedStage ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <button onClick={() => setSelectedStage('primary')} className="p-10 bg-yellow-400 rounded-[3rem] shadow-2xl hover:scale-105 transition-all border-8 border-white">
+            <div className="text-8xl mb-4">🎒</div>
+            <h2 className="text-3xl font-black text-yellow-900">المرحلة الابتدائية</h2>
+          </button>
+          <button onClick={() => setSelectedStage('prep')} className="p-10 bg-blue-600 rounded-[3rem] shadow-2xl hover:scale-105 transition-all border-8 border-white">
+            <div className="text-8xl mb-4">📝</div>
+            <h2 className="text-3xl font-black text-white">المرحلة الإعدادية</h2>
+          </button>
         </div>
-      </main>
+      ) : (
+        <div>
+          <button onClick={() => setSelectedStage(null)} className="mb-8 text-blue-600 font-bold flex items-center gap-2 mx-auto hover:underline">
+            ⬅️ العودة للاختيار الرئيسي
+          </button>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {stagesData[selectedStage].map((grade) => (
+              <Link key={grade.id} href={`/lessons?grade=${grade.name}`} className="p-6 bg-white rounded-2xl shadow-md border-2 border-gray-100 hover:border-blue-500 hover:shadow-blue-100 transition-all flex items-center gap-4 text-right">
+                <span className="text-3xl">{grade.icon}</span>
+                <span className="text-xl font-bold text-gray-800">{grade.name}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
