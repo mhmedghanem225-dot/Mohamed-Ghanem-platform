@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import Link from "next/link";
 
 export default function HomePage() {
   const [user, setUser] = useState<string>(""); 
@@ -9,8 +8,7 @@ export default function HomePage() {
   const [error, setError] = useState("");
   const [selectedStage, setSelectedStage] = useState<"primary" | "prep" | null>(null);
 
-  // الأكواد المسموح بها للدخول
-  const VALID_CODES = ["123456", "MG2026", "WINNER", "PRO100"];
+  const VALID_CODES = ["123456", "MG2026", "WINNER"];
 
   const stagesData = {
     primary: [
@@ -42,83 +40,71 @@ export default function HomePage() {
     setError("");
   };
 
+  // 1. واجهة تسجيل الدخول (الشكل اللي إنت بتحبه)
   if (!user) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4" dir="rtl">
-        {/* عنوان الأكاديمية والترحيب قبل الفورم */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-black text-blue-600 mb-2">Ghanem Academy</h1>
-          <p className="text-gray-500 font-medium tracking-wide">Welcome to Ghanem Academy</p>
+          <p className="text-gray-500 font-medium">Welcome to Ghanem Academy</p>
         </div>
 
         <div className="max-w-md w-full bg-white rounded-3xl shadow-xl p-8 border-t-8 border-blue-600">
           <h2 className="text-2xl font-bold text-center mb-6 text-black">تسجيل دخول الطلاب</h2>
           <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <label className="block text-sm font-bold text-gray-600 mb-2 mr-1">اسم الطالب</label>
-              <input 
-                type="text" 
-                value={nameInput}
-                onChange={(e) => setNameInput(e.target.value)}
-                placeholder="اسمك بالكامل"
-                className="w-full p-4 rounded-xl border border-gray-200 text-black outline-none focus:border-blue-500 transition-all"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-bold text-gray-600 mb-2 mr-1">كود الاشتراك</label>
-              <input 
-                type="text" 
-                value={codeInput}
-                onChange={(e) => setCodeInput(e.target.value)}
-                placeholder="أدخل الكود الخاص بك"
-                className="w-full p-4 rounded-xl border border-gray-200 text-center font-bold text-blue-600 outline-none focus:border-blue-500 transition-all"
-              />
-            </div>
-
-            {error && <p className="text-red-500 text-sm text-center font-bold bg-red-50 py-2 rounded-lg">{error}</p>}
-            
-            <button type="submit" className="w-full bg-blue-600 text-white p-4 rounded-xl font-bold hover:bg-blue-700 transition transform active:scale-95 shadow-lg shadow-blue-100">
-              دخول للمنصة
-            </button>
+            <input 
+              type="text" 
+              value={nameInput}
+              onChange={(e) => setNameInput(e.target.value)}
+              placeholder="اسم الطالب"
+              className="w-full p-4 rounded-xl border border-gray-200 text-black outline-none focus:border-blue-500"
+            />
+            <input 
+              type="text" 
+              value={codeInput}
+              onChange={(e) => setCodeInput(e.target.value)}
+              placeholder="كود الاشتراك"
+              className="w-full p-4 rounded-xl border border-gray-200 text-center font-bold text-blue-600 outline-none"
+            />
+            {error && <p className="text-red-500 text-sm text-center font-bold">{error}</p>}
+            <button type="submit" className="w-full bg-blue-600 text-white p-4 rounded-xl font-bold hover:bg-blue-700 transition">دخول</button>
           </form>
         </div>
       </div>
     );
   }
 
-  // الجزء الخاص باختيار المراحل (بيظهر بعد الدخول)
+  // 2. واجهة اختيار المراحل (منفصلة تماماً عن صفحة الدخول)
   return (
-    <div className="max-w-6xl mx-auto px-4 py-12 text-center" dir="rtl">
-      <h1 className="text-3xl font-bold mb-2 text-black">أهلاً بك يا {user} 👋</h1>
-      <p className="text-gray-500 mb-12">يرجى اختيار المرحلة الدراسية للبدء</p>
-
+    <div className="min-h-screen bg-white p-8 text-center" dir="rtl">
+      <h1 className="text-3xl font-bold mb-10 text-black">مرحباً بك يا {user} في أكاديمية غانم</h1>
+      
       {!selectedStage ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <button onClick={() => setSelectedStage('primary')} className="p-10 bg-yellow-400 rounded-3xl shadow-lg hover:scale-105 transition-all text-right">
+        <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+          <button onClick={() => setSelectedStage('primary')} className="p-12 bg-yellow-400 rounded-3xl shadow-lg hover:scale-105 transition">
             <div className="text-6xl mb-4">🎒</div>
-            <h2 className="text-2xl font-bold text-yellow-900">المرحلة الابتدائية</h2>
-            <p className="text-yellow-800 opacity-80 text-sm mt-2">من الصف الأول حتى السادس</p>
+            <h2 className="text-3xl font-bold text-yellow-900">المرحلة الابتدائية</h2>
           </button>
-          
-          <button onClick={() => setSelectedStage('prep')} className="p-10 bg-blue-600 rounded-3xl shadow-lg hover:scale-105 transition-all text-right">
+          <button onClick={() => setSelectedStage('prep')} className="p-12 bg-blue-600 rounded-3xl shadow-lg hover:scale-105 transition">
             <div className="text-6xl mb-4">📝</div>
-            <h2 className="text-2xl font-bold text-white">المرحلة الإعدادية</h2>
-            <p className="text-blue-100 opacity-80 text-sm mt-2">من الصف الأول حتى الثالث</p>
+            <h2 className="text-3xl font-bold text-white">المرحلة الإعدادية</h2>
           </button>
         </div>
       ) : (
-        <div>
-          <button onClick={() => setSelectedStage(null)} className="mb-8 flex items-center gap-2 text-blue-600 font-bold hover:underline mx-auto">
-            <span>⬅️</span> عودة لاختيار المرحلة
+        <div className="max-w-5xl mx-auto">
+          <button onClick={() => setSelectedStage(null)} className="mb-10 text-blue-600 font-bold hover:underline flex items-center gap-2 mx-auto">
+            ⬅️ العودة للمراحل
           </button>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 text-right">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {stagesData[selectedStage].map((grade) => (
-              <Link key={grade.id} href={`/lessons?grade=${grade.name}`} className="p-6 bg-white rounded-2xl shadow border-2 border-transparent hover:border-blue-500 flex items-center gap-4 text-black transition-all group">
-                <span className="text-3xl p-3 bg-gray-50 rounded-xl group-hover:bg-blue-50 transition-colors">{grade.icon}</span>
-                <span className="font-bold text-lg">{grade.name}</span>
-              </Link>
+              <button 
+                key={grade.id} 
+                onClick={() => window.location.href = `/lessons?grade=${encodeURIComponent(grade.name)}`}
+                className="p-6 bg-gray-50 rounded-2xl shadow-sm border-2 border-transparent hover:border-blue-500 hover:bg-white transition flex items-center gap-4 text-right"
+              >
+                <span className="text-3xl">{grade.icon}</span>
+                <span className="font-bold text-lg text-black">{grade.name}</span>
+              </button>
             ))}
           </div>
         </div>
