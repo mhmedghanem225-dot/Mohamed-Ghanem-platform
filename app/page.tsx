@@ -4,14 +4,13 @@ import { useState } from "react";
 export default function LoginPage() {
   const [code, setCode] = useState("");
   const [name, setName] = useState("");
+  const [selectedGrade, setSelectedGrade] = useState("الصف الخامس الابتدائي");
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    
+    // الكود هيدخل الطالب للمرحلة اللي اختارها من القائمة
     if (code === "123456") {
-      // هنا بنحدد إنه يدخل "تلقائياً" على منهج الصف الخامس الابتدائي
-      const targetGrade = encodeURIComponent("الصف الخامس الابتدائي");
-      window.location.assign("/lessons?grade=" + targetGrade);
+      window.location.assign("/lessons?grade=" + encodeURIComponent(selectedGrade));
     } else {
       alert("عذراً، كود الاشتراك غير صحيح");
     }
@@ -19,19 +18,19 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 font-sans" dir="rtl">
-      <div className="max-w-md w-full bg-white rounded-3xl shadow-2xl p-10 border border-blue-50 text-center">
+      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 border border-gray-100 text-center">
         
-        {/* الواجهة الجديدة المحترفة */}
-        <h1 className="text-4xl font-black text-blue-600 mb-2 tracking-tighter">Ghanem Academy</h1>
-        <p className="text-gray-400 mb-10 font-medium tracking-wide text-sm">Welcome to Ghanem Academy</p>
+        {/* جملة الترحيب اللي طلبتها */}
+        <h1 className="text-3xl font-black text-blue-600 mb-2">Ghanem Academy</h1>
+        <p className="text-gray-500 mb-8 font-medium">Welcome to Ghanem Academy</p>
 
-        <form onSubmit={handleLogin} className="space-y-6">
+        <form onSubmit={handleLogin} className="space-y-5">
           <div className="text-right">
-            <label className="block text-xs font-bold text-gray-400 mr-2 mb-2">اسم الطالب</label>
+            <label className="block text-sm font-bold text-gray-700 mb-2 mr-1">اسم الطالب</label>
             <input
               type="text"
               required
-              className="w-full px-5 py-4 rounded-2xl bg-gray-50 border-none outline-none focus:ring-2 focus:ring-blue-500 text-right transition-all"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-blue-500 text-right"
               placeholder="اكتب اسمك هنا"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -39,30 +38,42 @@ export default function LoginPage() {
           </div>
 
           <div className="text-right">
-            <label className="block text-xs font-bold text-gray-400 mr-2 mb-2">كود الاشتراك</label>
+            <label className="block text-sm font-bold text-gray-700 mb-2 mr-1">كود الاشتراك</label>
             <input
               type="password"
               required
-              className="w-full px-5 py-4 rounded-2xl bg-gray-50 border-none outline-none focus:ring-2 focus:ring-blue-500 text-center tracking-widest transition-all"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-blue-500 text-center"
               placeholder="••••••"
               value={code}
               onChange={(e) => setCode(e.target.value)}
             />
           </div>
 
+          <div className="text-right">
+            <label className="block text-sm font-bold text-gray-700 mb-2 mr-1">اختر المرحلة الدراسية</label>
+            <select
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-blue-500 bg-white text-right"
+              value={selectedGrade}
+              onChange={(e) => setSelectedGrade(e.target.value)}
+            >
+              <option>الصف الثاني الابتدائي</option>
+              <option>الصف الثالث الابتدائي</option>
+              <option>الصف الرابع الابتدائي</option>
+              <option>الصف الخامس الابتدائي</option>
+            </select>
+          </div>
+
           <button
             type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl shadow-lg shadow-blue-200 transition-all transform active:scale-95"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all shadow-md mt-4"
           >
             دخول للمنصة
           </button>
         </form>
         
-        <div className="mt-10 pt-6 border-t border-gray-50">
-          <p className="text-gray-300 text-[10px] uppercase tracking-widest">
-            © Mr. Mohamed Ghanem 2026
-          </p>
-        </div>
+        <p className="text-gray-400 text-xs mt-8">
+          جميع الحقوق محفوظة © مستر محمد غانم 2026
+        </p>
       </div>
     </div>
   );
