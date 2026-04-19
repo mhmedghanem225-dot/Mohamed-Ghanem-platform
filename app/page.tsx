@@ -1,23 +1,17 @@
 "use client";
-import { useState, useContext } from "react";
-import { UserContext } from "./layout";
+import { useState } from "react";
 import Link from "next/link";
 
-// 1. تعريف أنواع البيانات للمراحل
-interface Grade { id: number; name: string; icon: string; }
-interface Stages { primary: Grade[]; prep: Grade[]; }
-
 export default function HomePage() {
-  const { user, setUser } = useContext(UserContext) as any;
+  const [user, setUser] = useState<string>(""); 
   const [nameInput, setNameInput] = useState("");
   const [codeInput, setCodeInput] = useState("");
   const [error, setError] = useState("");
-  const [selectedStage, setSelectedStage] = useState<keyof Stages | null>(null);
+  const [selectedStage, setSelectedStage] = useState<"primary" | "prep" | null>(null);
 
-  // 2. قائمة أكواد الاشتراك (تستطيع تعديلها في أي وقت)
   const VALID_CODES = ["MG2026", "WINNER", "PRO100"];
 
-  const stagesData: Stages = {
+  const stagesData = {
     primary: [
       { id: 1, name: "الصف الأول الابتدائي", icon: "🌱" },
       { id: 2, name: "الصف الثاني الابتدائي", icon: "🎨" },
@@ -39,79 +33,62 @@ export default function HomePage() {
       setError("يرجى كتابة اسمك بشكل صحيح");
       return;
     }
-    // التحقق من الكود
     if (!VALID_CODES.includes(codeInput.toUpperCase())) {
-      setError("كود الاشتراك غير صحيح.. اطلبه من Mr. Mohamed");
+      setError("كود الاشتراك غير صحيح");
       return;
     }
-    setUser(nameInput); // تسجيل الدخول بنجاح
+    setUser(nameInput);
     setError("");
   };
 
-  // --- الحالة الأولى: الطالب لم يسجل دخوله بعد ---
   if (!user) {
     return (
-      <div className="max-w-md mx-auto mt-20 p-8 bg-white rounded-[2.5rem] shadow-2xl border-t-8 border-blue-600">
-        <h1 className="text-2xl font-black text-center text-gray-800 mb-6">تسجيل دخول الطلاب 👨‍🎓</h1>
+      <div className="max-w-md mx-auto mt-20 p-8 bg-white rounded-3xl shadow-xl border-t-8 border-blue-600">
+        <h2 className="text-2xl font-bold text-center mb-6 text-black">تسجيل دخول الطلاب</h2>
         <form onSubmit={handleLogin} className="space-y-4">
-          <div>
-            <label className="block text-sm font-bold text-gray-700 mb-1">اسمك بالكامل</label>
-            <input 
-              type="text" 
-              value={nameInput}
-              onChange={(e) => setNameInput(e.target.value)}
-              placeholder="اكتب اسمك هنا"
-              className="w-full p-4 rounded-xl border-2 border-gray-100 focus:border-blue-500 outline-none text-black"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-bold text-gray-700 mb-1">كود الاشتراك</label>
-            <input 
-              type="text" 
-              value={codeInput}
-              onChange={(e) => setCodeInput(e.target.value)}
-              placeholder="مثال: MG2026"
-              className="w-full p-4 rounded-xl border-2 border-gray-100 focus:border-blue-500 outline-none text-center font-bold text-blue-600"
-            />
-          </div>
-          {error && <p className="text-red-500 text-sm font-bold text-center">{error}</p>}
-          <button type="submit" className="w-full bg-blue-600 text-white p-4 rounded-xl font-black text-lg hover:bg-blue-700 transition shadow-lg">
-            دخول للمنصة
-          </button>
+          <input 
+            type="text" 
+            value={nameInput}
+            onChange={(e) => setNameInput(e.target.value)}
+            placeholder="اسمك بالكامل"
+            className="w-full p-4 rounded-xl border border-gray-200 text-black outline-none"
+          />
+          <input 
+            type="text" 
+            value={codeInput}
+            onChange={(e) => setCodeInput(e.target.value)}
+            placeholder="كود الاشتراك"
+            className="w-full p-4 rounded-xl border border-gray-200 text-center font-bold text-blue-600 outline-none"
+          />
+          {error && <p className="text-red-500 text-sm text-center font-bold">{error}</p>}
+          <button type="submit" className="w-full bg-blue-600 text-white p-4 rounded-xl font-bold hover:bg-blue-700 transition">دخول</button>
         </form>
       </div>
     );
   }
 
-  // --- الحالة الثانية: الطالب سجل دخوله وبانتظار اختيار المرحلة ---
   return (
     <div className="max-w-6xl mx-auto px-4 py-12 text-center">
-      <header className="mb-12">
-        <h1 className="text-4xl font-black text-gray-900 mb-4">أهلاً بك يا <span className="text-blue-600">{user}</span></h1>
-        <p className="text-xl text-gray-600">اختر مرحلتك الدراسية الآن</p>
-      </header>
-
+      <h1 className="text-3xl font-bold mb-8 text-black">أهلاً بك يا {user}</h1>
       {!selectedStage ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <button onClick={() => setSelectedStage('primary')} className="p-10 bg-yellow-400 rounded-[3rem] shadow-2xl hover:scale-105 transition-all border-8 border-white">
-            <div className="text-8xl mb-4">🎒</div>
-            <h2 className="text-3xl font-black text-yellow-900">المرحلة الابتدائية</h2>
+          <button onClick={() => setSelectedStage('primary')} className="p-10 bg-yellow-400 rounded-3xl shadow-lg hover:scale-105 transition">
+            <div className="text-6xl mb-4">🎒</div>
+            <h2 className="text-2xl font-bold text-yellow-900">المرحلة الابتدائية</h2>
           </button>
-          <button onClick={() => setSelectedStage('prep')} className="p-10 bg-blue-600 rounded-[3rem] shadow-2xl hover:scale-105 transition-all border-8 border-white">
-            <div className="text-8xl mb-4">📝</div>
-            <h2 className="text-3xl font-black text-white">المرحلة الإعدادية</h2>
+          <button onClick={() => setSelectedStage('prep')} className="p-10 bg-blue-600 rounded-3xl shadow-lg hover:scale-105 transition">
+            <div className="text-6xl mb-4">📝</div>
+            <h2 className="text-2xl font-bold text-white">المرحلة الإعدادية</h2>
           </button>
         </div>
       ) : (
         <div>
-          <button onClick={() => setSelectedStage(null)} className="mb-8 text-blue-600 font-bold flex items-center gap-2 mx-auto hover:underline">
-            ⬅️ العودة للاختيار الرئيسي
-          </button>
+          <button onClick={() => setSelectedStage(null)} className="mb-8 text-blue-600 font-bold hover:underline">⬅️ عودة للمراحل</button>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {stagesData[selectedStage].map((grade) => (
-              <Link key={grade.id} href={`/lessons?grade=${grade.name}`} className="p-6 bg-white rounded-2xl shadow-md border-2 border-gray-100 hover:border-blue-500 hover:shadow-blue-100 transition-all flex items-center gap-4 text-right">
-                <span className="text-3xl">{grade.icon}</span>
-                <span className="text-xl font-bold text-gray-800">{grade.name}</span>
+              <Link key={grade.id} href={`/lessons?grade=${grade.name}`} className="p-6 bg-white rounded-2xl shadow border flex items-center gap-4 text-black hover:border-blue-500 transition">
+                <span className="text-2xl">{grade.icon}</span>
+                <span className="font-bold">{grade.name}</span>
               </Link>
             ))}
           </div>
