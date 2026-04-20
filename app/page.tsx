@@ -52,14 +52,13 @@ export default function HomePage() {
     setError("");
   };
 
-  // وظيفة الانتقال لصفحة الدروس
   const goToLessons = (gradeName: string) => {
     window.location.href = `/lessons?grade=${encodeURIComponent(gradeName)}`;
   };
 
   if (isLoading) return <div className="text-center mt-20 font-bold">جاري التحميل...</div>;
 
-  // 1. واجهة تسجيل الدخول
+  // 1. شاشة تسجيل الدخول
   if (!user) {
     return (
       <div className="max-w-md mx-auto mt-20 p-8 bg-white rounded-[2.5rem] shadow-2xl border-t-8 border-blue-600" dir="rtl">
@@ -80,7 +79,9 @@ export default function HomePage() {
             className="w-full p-4 rounded-xl border-2 border-gray-100 text-center font-bold text-blue-600 outline-none"
           />
           {error && <p className="text-red-500 text-sm font-bold text-center">{error}</p>}
-          <button type="submit" className="w-full bg-blue-600 text-white p-4 rounded-xl font-black hover:bg-blue-700 transition">دخول للمنصة</button>
+          <button type="submit" className="w-full bg-blue-600 text-white p-4 rounded-xl font-black hover:bg-blue-700 transition">
+            دخول للمنصة
+          </button>
         </form>
       </div>
     );
@@ -93,7 +94,7 @@ export default function HomePage() {
         <p className="text-xl text-gray-600">اختر مرحلتك الدراسية</p>
       </header>
 
-      {/* 2. اختيار المرحلة */}
+      {/* 2. شاشة اختيار المرحلة */}
       {!selectedStage ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <button onClick={() => setSelectedStage('primary')} className="p-10 bg-yellow-400 rounded-[3rem] shadow-2xl hover:scale-105 transition-all border-8 border-white">
@@ -106,7 +107,7 @@ export default function HomePage() {
           </button>
         </div>
       ) : (
-        /* 3. اختيار الصف */
+        /* 3. شاشة اختيار الصف */
         <div>
           <button onClick={() => setSelectedStage(null)} className="mb-8 text-blue-600 font-bold flex items-center gap-2 mx-auto hover:underline">
             ⬅️ العودة للمراحل
@@ -115,7 +116,7 @@ export default function HomePage() {
             {stagesData[selectedStage].map((grade) => (
               <div 
                 key={grade.id} 
-                onClick={() => goToLessons(grade.name)}
+                onClick={() => goToLessons(grade.name)} 
                 className="p-6 bg-white rounded-2xl shadow-md border-2 border-gray-100 hover:border-blue-500 transition-all cursor-pointer flex items-center gap-4 text-right"
               >
                 <span className="text-3xl">{grade.icon}</span>
