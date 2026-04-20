@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import Link from "next/link";
 
 // تعريف أنواع البيانات
 interface Grade { id: number; name: string; icon: string; }
@@ -52,34 +53,35 @@ export default function HomePage() {
     setError("");
   };
 
-  const goToLessons = (gradeName: string) => {
-    window.location.href = `/lessons?grade=${encodeURIComponent(gradeName)}`;
-  };
-
   if (isLoading) return <div className="text-center mt-20 font-bold">جاري التحميل...</div>;
 
-  // 1. شاشة تسجيل الدخول
   if (!user) {
     return (
       <div className="max-w-md mx-auto mt-20 p-8 bg-white rounded-[2.5rem] shadow-2xl border-t-8 border-blue-600" dir="rtl">
-        <h1 className="text-2xl font-black text-center text-gray-800 mb-6">تسجيل دخول الطلاب 👨‍🎓</h1>
+        <h1 className="text-2xl font-black text-center text-gray-800 mb-6 text-black">تسجيل دخول الطلاب 👨‍🎓</h1>
         <form onSubmit={handleLogin} className="space-y-4">
-          <input 
-            type="text" 
-            value={nameInput}
-            onChange={(e) => setNameInput(e.target.value)}
-            placeholder="اسم الطالب"
-            className="w-full p-4 rounded-xl border-2 border-gray-100 outline-none text-black"
-          />
-          <input 
-            type="text" 
-            value={codeInput}
-            onChange={(e) => setCodeInput(e.target.value)}
-            placeholder="كود الاشتراك"
-            className="w-full p-4 rounded-xl border-2 border-gray-100 text-center font-bold text-blue-600 outline-none"
-          />
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-1">اسمك بالكامل</label>
+            <input 
+              type="text" 
+              value={nameInput}
+              onChange={(e) => setNameInput(e.target.value)}
+              placeholder="اكتب اسمك هنا"
+              className="w-full p-4 rounded-xl border-2 border-gray-100 focus:border-blue-500 outline-none text-black"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-1">كود الاشتراك</label>
+            <input 
+              type="text" 
+              value={codeInput}
+              onChange={(e) => setCodeInput(e.target.value)}
+              placeholder="مثال: MG2026"
+              className="w-full p-4 rounded-xl border-2 border-gray-100 focus:border-blue-500 outline-none text-center font-bold text-blue-600"
+            />
+          </div>
           {error && <p className="text-red-500 text-sm font-bold text-center">{error}</p>}
-          <button type="submit" className="w-full bg-blue-600 text-white p-4 rounded-xl font-black hover:bg-blue-700 transition">
+          <button type="submit" className="w-full bg-blue-600 text-white p-4 rounded-xl font-black text-lg hover:bg-blue-700 transition shadow-lg">
             دخول للمنصة
           </button>
         </form>
@@ -90,11 +92,10 @@ export default function HomePage() {
   return (
     <div className="max-w-6xl mx-auto px-4 py-12 text-center" dir="rtl">
       <header className="mb-12">
-        <h1 className="text-4xl font-black text-gray-900 mb-4">أهلاً بك يا <span className="text-blue-600">{user}</span></h1>
-        <p className="text-xl text-gray-600">اختر مرحلتك الدراسية</p>
+        <h1 className="text-4xl font-black text-gray-900 mb-4 text-black">أهلاً بك يا <span className="text-blue-600">{user}</span></h1>
+        <p className="text-xl text-gray-600">اختر مرحلتك الدراسية الآن</p>
       </header>
 
-      {/* 2. شاشة اختيار المرحلة */}
       {!selectedStage ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <button onClick={() => setSelectedStage('primary')} className="p-10 bg-yellow-400 rounded-[3rem] shadow-2xl hover:scale-105 transition-all border-8 border-white">
@@ -107,21 +108,20 @@ export default function HomePage() {
           </button>
         </div>
       ) : (
-        /* 3. شاشة اختيار الصف */
         <div>
           <button onClick={() => setSelectedStage(null)} className="mb-8 text-blue-600 font-bold flex items-center gap-2 mx-auto hover:underline">
-            ⬅️ العودة للمراحل
+            ⬅️ العودة للاختيار الرئيسي
           </button>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {stagesData[selectedStage].map((grade) => (
-              <div 
+              <Link 
                 key={grade.id} 
-                onClick={() => goToLessons(grade.name)} 
-                className="p-6 bg-white rounded-2xl shadow-md border-2 border-gray-100 hover:border-blue-500 transition-all cursor-pointer flex items-center gap-4 text-right"
+                href={`/lessons?grade=${encodeURIComponent(grade.name)}`} 
+                className="p-6 bg-white rounded-2xl shadow-md border-2 border-gray-100 hover:border-blue-500 hover:shadow-blue-100 transition-all flex items-center gap-4 text-right"
               >
                 <span className="text-3xl">{grade.icon}</span>
                 <span className="text-xl font-bold text-gray-800">{grade.name}</span>
-              </div>
+              </Link>
             ))}
           </div>
         </div>
