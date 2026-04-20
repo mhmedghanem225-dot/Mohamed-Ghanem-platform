@@ -52,13 +52,14 @@ export default function HomePage() {
     setError("");
   };
 
-  // الوظيفة المسؤولة عن فتح واجهة الدروس الزرقاء (image_d064c6.png)
-  const openLessons = (gradeName: string) => {
-    window.location.replace(`/lessons?grade=${encodeURIComponent(gradeName)}`);
+  // هذه الوظيفة هي التي ستفتح لك الواجهة الزرقاء التي طلبتها
+  const goToLessons = (gradeName: string) => {
+    window.location.href = `/lessons?grade=${encodeURIComponent(gradeName)}`;
   };
 
   if (isLoading) return <div className="text-center mt-20 font-bold">جاري التحميل...</div>;
 
+  // 1. شاشة تسجيل الدخول (تظهر أولاً)
   if (!user) {
     return (
       <div className="max-w-md mx-auto mt-20 p-8 bg-white rounded-[2.5rem] shadow-2xl border-t-8 border-blue-600" dir="rtl">
@@ -68,7 +69,7 @@ export default function HomePage() {
             type="text" 
             value={nameInput}
             onChange={(e) => setNameInput(e.target.value)}
-            placeholder="اسمك بالكامل"
+            placeholder="اسم الطالب"
             className="w-full p-4 rounded-xl border-2 border-gray-100 outline-none text-black"
           />
           <input 
@@ -89,9 +90,10 @@ export default function HomePage() {
     <div className="max-w-6xl mx-auto px-4 py-12 text-center" dir="rtl">
       <header className="mb-12">
         <h1 className="text-4xl font-black text-gray-900 mb-4">أهلاً بك يا <span className="text-blue-600">{user}</span></h1>
-        <p className="text-xl text-gray-600">اختر مرحلتك الدراسية الآن</p>
+        <p className="text-xl text-gray-600">اختر مرحلتك الدراسية</p>
       </header>
 
+      {/* 2. شاشة اختيار المرحلة (ابتدائي / إعدادي) */}
       {!selectedStage ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <button onClick={() => setSelectedStage('primary')} className="p-10 bg-yellow-400 rounded-[3rem] shadow-2xl hover:scale-105 transition-all border-8 border-white">
@@ -104,13 +106,16 @@ export default function HomePage() {
           </button>
         </div>
       ) : (
+        /* 3. شاشة اختيار الصف الدراسي (أول، ثاني، إلخ) */
         <div>
-          <button onClick={() => setSelectedStage(null)} className="mb-8 text-blue-600 font-bold mx-auto hover:underline">⬅️ العودة للاختيار الرئيسي</button>
+          <button onClick={() => setSelectedStage(null)} className="mb-8 text-blue-600 font-bold flex items-center gap-2 mx-auto hover:underline">
+            ⬅️ العودة للمراحل
+          </button>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {stagesData[selectedStage].map((grade) => (
               <div 
                 key={grade.id} 
-                onClick={() => openLessons(grade.name)}
+                onClick={() => goToLessons(grade.name)} // عند الضغط سيفتح الواجهة الزرقاء فوراً
                 className="p-6 bg-white rounded-2xl shadow-md border-2 border-gray-100 hover:border-blue-500 transition-all cursor-pointer flex items-center gap-4 text-right"
               >
                 <span className="text-3xl">{grade.icon}</span>
