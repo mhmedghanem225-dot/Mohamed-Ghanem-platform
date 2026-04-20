@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 
 // تعريف أنواع البيانات
@@ -12,7 +12,6 @@ export default function HomePage() {
   const [codeInput, setCodeInput] = useState("");
   const [error, setError] = useState("");
   const [selectedStage, setSelectedStage] = useState<keyof Stages | null>(null);
-  const [isLoading, setIsLoading] = useState(true); // للتأكد من التحميل
 
   const VALID_CODES = ["MG2026", "WINNER", "PRO100"];
 
@@ -32,15 +31,6 @@ export default function HomePage() {
     ]
   };
 
-  // --- الجزء الجديد: التأكد من تسجيل الدخول السابق ---
-  useEffect(() => {
-    const savedUser = localStorage.getItem("ghanem_user_name");
-    if (savedUser) {
-      setUser(savedUser);
-    }
-    setIsLoading(false);
-  }, []);
-
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (nameInput.length < 3) {
@@ -51,26 +41,14 @@ export default function HomePage() {
       setError("كود الاشتراك غير صحيح.. اطلبه من مستر محمد");
       return;
     }
-    
-    // حفظ في ذاكرة المتصفح عشان ميسجلش دخول تاني
-    localStorage.setItem("ghanem_user_name", nameInput);
     setUser(nameInput);
     setError("");
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("ghanem_user_name");
-    setUser(null);
-    setSelectedStage(null);
-  };
-  // ---------------------------------------------
-
-  if (isLoading) return <div className="text-center mt-20 font-bold">جاري التحميل...</div>;
-
   if (!user) {
     return (
-      <div className="max-w-md mx-auto mt-20 p-8 bg-white rounded-[2.5rem] shadow-2xl border-t-8 border-blue-600" dir="rtl">
-        <h1 className="text-2xl font-black text-center text-gray-800 mb-6">تسجيل دخول الطلاب 👨‍🎓</h1>
+      <div className="max-w-md mx-auto mt-20 p-8 bg-white rounded-[2.5rem] shadow-2xl border-t-8 border-blue-600">
+        <h1 className="text-2xl font-black text-center text-gray-800 mb-6 text-black">تسجيل دخول الطلاب 👨‍🎓</h1>
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-1">اسمك بالكامل</label>
@@ -102,9 +80,8 @@ export default function HomePage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-12 text-center" dir="rtl">
-      <header className="mb-12 relative">
-        <button onClick={handleLogout} className="absolute right-0 top-0 text-red-500 text-sm font-bold hover:underline">تسجيل خروج</button>
+    <div className="max-w-6xl mx-auto px-4 py-12 text-center">
+      <header className="mb-12">
         <h1 className="text-4xl font-black text-gray-900 mb-4 text-black">أهلاً بك يا <span className="text-blue-600">{user}</span></h1>
         <p className="text-xl text-gray-600">اختر مرحلتك الدراسية الآن</p>
       </header>
@@ -113,11 +90,11 @@ export default function HomePage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <button onClick={() => setSelectedStage('primary')} className="p-10 bg-yellow-400 rounded-[3rem] shadow-2xl hover:scale-105 transition-all border-8 border-white">
             <div className="text-8xl mb-4">🎒</div>
-            <h2 className="text-3xl font-black text-yellow-900 text-right">المرحلة الابتدائية</h2>
+            <h2 className="text-3xl font-black text-yellow-900">المرحلة الابتدائية</h2>
           </button>
           <button onClick={() => setSelectedStage('prep')} className="p-10 bg-blue-600 rounded-[3rem] shadow-2xl hover:scale-105 transition-all border-8 border-white">
             <div className="text-8xl mb-4">📝</div>
-            <h2 className="text-3xl font-black text-white text-right">المرحلة الإعدادية</h2>
+            <h2 className="text-3xl font-black text-white">المرحلة الإعدادية</h2>
           </button>
         </div>
       ) : (
