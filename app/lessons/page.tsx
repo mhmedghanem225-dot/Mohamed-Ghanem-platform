@@ -9,13 +9,21 @@ function LessonsContent() {
   const grade = searchParams.get("grade") || "";
   const [lessons, setLessons] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [studentName, setStudentName] = useState(""); // حالة لحفظ اسم الطالب
 
   const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ-ZJwP0z4SVM4XfAPevqPqsSvbSBRy18i_rbgfVNGYVHBZj10aHtdHqhMj8kKKkI0WHwWLDLFxXniO/pub?output=csv";
 
   useEffect(() => {
     const savedSession = localStorage.getItem("ghanem_session");
-    if (!savedSession) { router.replace("/"); return; }
+    if (!savedSession) { 
+      router.replace("/"); 
+      return; 
+    }
     
+    // استخراج اسم الطالب من الجلسة المخزنة
+    const userData = JSON.parse(savedSession);
+    setStudentName(userData.name);
+
     const fetchLessons = async () => {
       try {
         const res = await fetch(SHEET_CSV_URL);
@@ -53,14 +61,19 @@ function LessonsContent() {
             <Image src="/logo.png" alt="Logo" width={48} height={48} className="rounded-full object-contain" priority />
           </div>
         </div>
+        
         <div className="relative z-10 text-white">
-          <h1 className="text-3xl font-black mb-2">{grade}</h1>
-          <p className="opacity-80 font-medium">جاهز لرحلة التعلم اليوم؟ 🚀</p>
+          {/* رسالة ترحيبية باسم الطالب */}
+          <p className="text-blue-100 font-bold text-sm mb-1 animate-fade-in">أهلاً بك يا بطل، {studentName} 👋</p>
+          <h1 className="text-3xl font-black mb-1">{grade}</h1>
+          <p className="opacity-80 text-sm font-medium">جاهز لرحلة التعلم اليوم؟ 🚀</p>
         </div>
+        
+        {/* لمسة جمالية خلفية */}
         <div className="absolute -left-10 -bottom-10 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
       </div>
 
-      {/* منطقة الدروس - التعديل هنا: استخدام mt-6 بدلاً من -mt-10 لحل مشكلة الاختفاء */}
+      {/* منطقة الدروس */}
       <div className="max-w-md mx-auto px-4 mt-6">
         {loading ? (
           <div className="bg-white p-10 rounded-[2.5rem] shadow-xl text-center font-bold text-blue-600 animate-pulse">
