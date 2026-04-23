@@ -9,7 +9,7 @@ export default function HonorRollPage() {
   const [loading, setLoading] = useState(true);
 
   // رابط الشيت مع رقم الـ gid الصحيح لورقة HonorRoll
-  const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ-ZJwP0z4SVM4XfAPevqPqsSvbSBRy18i_rbgfVNGYVHBZj10aHtdHqhMj8kKKkI0WHwWLDLFxXniO/pub?gid=1384724522&output=csv";
+  const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ-ZJwP0z4SVM4XfAPevqPqsSvbSBRy18i_rbgfVNGYVHBZj10aHtdHqhMj8kKKkI0WHwWLDLFxXniO/pub?gid=1187405641&output=csv";
 
   useEffect(() => {
     const fetchStars = async () => {
