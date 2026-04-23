@@ -1,8 +1,6 @@
 "use client";
-import { useState } from "react";
-import Link from "next/link";
+import { useState, useEffect } from "react";
 
-// تعريف أنواع البيانات
 interface Grade { id: number; name: string; icon: string; }
 interface Stages { primary: Grade[]; prep: Grade[]; }
 
@@ -12,6 +10,7 @@ export default function HomePage() {
   const [codeInput, setCodeInput] = useState("");
   const [error, setError] = useState("");
   const [selectedStage, setSelectedStage] = useState<keyof Stages | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const VALID_CODES = ["MG2026", "WINNER", "PRO100"];
 
@@ -31,6 +30,15 @@ export default function HomePage() {
     ]
   };
 
+  // وظيفة التحقق: لو الطالب سجل قبل كده، النافذة مش هتظهر له تاني
+  useEffect(() => {
+    const savedUser = localStorage.getItem("ghanem_user_logged");
+    if (savedUser) {
+      setUser(savedUser);
+    }
+    setIsLoading(false);
+  }, []);
+
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (nameInput.length < 3) {
@@ -38,52 +46,51 @@ export default function HomePage() {
       return;
     }
     if (!VALID_CODES.includes(codeInput.toUpperCase())) {
-      setError("كود الاشتراك غير صحيح.. اطلبه من مستر محمد");
+      setError("كود الاشتراك غير صحيح");
       return;
     }
+    // حفظ الدخول عشان النافذة تختفي تماماً
+    localStorage.setItem("ghanem_user_logged", nameInput);
     setUser(nameInput);
     setError("");
   };
 
+  if (isLoading) return null;
+
+  // النافذة دي هتظهر "مرة واحدة بس" في العمر على جهاز الطالب
   if (!user) {
     return (
-      <div className="max-w-md mx-auto mt-20 p-8 bg-white rounded-[2.5rem] shadow-2xl border-t-8 border-blue-600">
-        <h1 className="text-2xl font-black text-center text-gray-800 mb-6 text-black">تسجيل دخول الطلاب 👨‍🎓</h1>
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div>
-            <label className="block text-sm font-bold text-gray-700 mb-1">اسمك بالكامل</label>
+      <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4" dir="rtl">
+        <div className="max-w-md w-full p-8 bg-white rounded-[2.5rem] shadow-2xl border-t-8 border-blue-600">
+          <h1 className="text-2xl font-black text-center text-gray-800 mb-6">منصة غانم التعليمية 👨‍🎓</h1>
+          <form onSubmit={handleLogin} className="space-y-4">
             <input 
               type="text" 
               value={nameInput}
               onChange={(e) => setNameInput(e.target.value)}
-              placeholder="اكتب اسمك هنا"
-              className="w-full p-4 rounded-xl border-2 border-gray-100 focus:border-blue-500 outline-none text-black"
+              placeholder="اسم الطالب"
+              className="w-full p-4 rounded-xl border-2 border-gray-100 outline-none text-black"
             />
-          </div>
-          <div>
-            <label className="block text-sm font-bold text-gray-700 mb-1">كود الاشتراك</label>
             <input 
               type="text" 
               value={codeInput}
               onChange={(e) => setCodeInput(e.target.value)}
-              placeholder="مثال: MG2026"
-              className="w-full p-4 rounded-xl border-2 border-gray-100 focus:border-blue-500 outline-none text-center font-bold text-blue-600"
+              placeholder="كود الاشتراك"
+              className="w-full p-4 rounded-xl border-2 border-gray-100 text-center font-bold text-blue-600 outline-none"
             />
-          </div>
-          {error && <p className="text-red-500 text-sm font-bold text-center">{error}</p>}
-          <button type="submit" className="w-full bg-blue-600 text-white p-4 rounded-xl font-black text-lg hover:bg-blue-700 transition shadow-lg">
-            دخول للمنصة
-          </button>
-        </form>
+            {error && <p className="text-red-500 text-sm font-bold text-center">{error}</p>}
+            <button type="submit" className="w-full bg-blue-600 text-white p-4 rounded-xl font-black">دخول للمنصة</button>
+          </form>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-12 text-center">
+    <div className="max-w-6xl mx-auto px-4 py-12 text-center" dir="rtl">
       <header className="mb-12">
-        <h1 className="text-4xl font-black text-gray-900 mb-4 text-black">أهلاً بك يا <span className="text-blue-600">{user}</span></h1>
-        <p className="text-xl text-gray-600">اختر مرحلتك الدراسية الآن</p>
+        <h1 className="text-4xl font-black text-gray-900 mb-4">أهلاً بك يا <span className="text-blue-600">{user}</span></h1>
+        <p className="text-xl text-gray-600">اختر مرحلتك الدراسية</p>
       </header>
 
       {!selectedStage ? (
@@ -99,15 +106,17 @@ export default function HomePage() {
         </div>
       ) : (
         <div>
-          <button onClick={() => setSelectedStage(null)} className="mb-8 text-blue-600 font-bold flex items-center gap-2 mx-auto hover:underline">
-            ⬅️ العودة للاختيار الرئيسي
-          </button>
+          <button onClick={() => setSelectedStage(null)} className="mb-8 text-blue-600 font-bold mx-auto hover:underline">⬅️ العودة للمراحل</button>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {stagesData[selectedStage].map((grade) => (
-              <Link key={grade.id} href={`/lessons?grade=${grade.name}`} className="p-6 bg-white rounded-2xl shadow-md border-2 border-gray-100 hover:border-blue-500 hover:shadow-blue-100 transition-all flex items-center gap-4 text-right">
+              <div 
+                key={grade.id} 
+                onClick={() => window.location.href = `/lessons?grade=${encodeURIComponent(grade.name)}`}
+                className="p-6 bg-white rounded-2xl shadow-md border-2 border-gray-100 hover:border-blue-500 transition-all cursor-pointer flex items-center gap-4 text-right"
+              >
                 <span className="text-3xl">{grade.icon}</span>
                 <span className="text-xl font-bold text-gray-800">{grade.name}</span>
-              </Link>
+              </div>
             ))}
           </div>
         </div>
