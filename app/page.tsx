@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 
 // تعريف أنواع البيانات
@@ -12,7 +12,6 @@ export default function HomePage() {
   const [codeInput, setCodeInput] = useState("");
   const [error, setError] = useState("");
   const [selectedStage, setSelectedStage] = useState<keyof Stages | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
   const VALID_CODES = ["MG2026", "WINNER", "PRO100"];
 
@@ -32,12 +31,6 @@ export default function HomePage() {
     ]
   };
 
-  useEffect(() => {
-    const savedUser = localStorage.getItem("ghanem_user_name");
-    if (savedUser) setUser(savedUser);
-    setIsLoading(false);
-  }, []);
-
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (nameInput.length < 3) {
@@ -48,16 +41,13 @@ export default function HomePage() {
       setError("كود الاشتراك غير صحيح.. اطلبه من مستر محمد");
       return;
     }
-    localStorage.setItem("ghanem_user_name", nameInput);
     setUser(nameInput);
     setError("");
   };
 
-  if (isLoading) return <div className="text-center mt-20 font-bold">جاري التحميل...</div>;
-
   if (!user) {
     return (
-      <div className="max-w-md mx-auto mt-20 p-8 bg-white rounded-[2.5rem] shadow-2xl border-t-8 border-blue-600" dir="rtl">
+      <div className="max-w-md mx-auto mt-20 p-8 bg-white rounded-[2.5rem] shadow-2xl border-t-8 border-blue-600">
         <h1 className="text-2xl font-black text-center text-gray-800 mb-6 text-black">تسجيل دخول الطلاب 👨‍🎓</h1>
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
@@ -90,7 +80,7 @@ export default function HomePage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-12 text-center" dir="rtl">
+    <div className="max-w-6xl mx-auto px-4 py-12 text-center">
       <header className="mb-12">
         <h1 className="text-4xl font-black text-gray-900 mb-4 text-black">أهلاً بك يا <span className="text-blue-600">{user}</span></h1>
         <p className="text-xl text-gray-600">اختر مرحلتك الدراسية الآن</p>
@@ -114,11 +104,7 @@ export default function HomePage() {
           </button>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {stagesData[selectedStage].map((grade) => (
-              <Link 
-                key={grade.id} 
-                href={`/lessons?grade=${encodeURIComponent(grade.name)}`} 
-                className="p-6 bg-white rounded-2xl shadow-md border-2 border-gray-100 hover:border-blue-500 hover:shadow-blue-100 transition-all flex items-center gap-4 text-right"
-              >
+              <Link key={grade.id} href={`/lessons?grade=${grade.name}`} className="p-6 bg-white rounded-2xl shadow-md border-2 border-gray-100 hover:border-blue-500 hover:shadow-blue-100 transition-all flex items-center gap-4 text-right">
                 <span className="text-3xl">{grade.icon}</span>
                 <span className="text-xl font-bold text-gray-800">{grade.name}</span>
               </Link>
