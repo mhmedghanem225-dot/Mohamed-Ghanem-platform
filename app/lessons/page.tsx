@@ -1,84 +1,63 @@
 "use client";
-import { useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import Link from "next/link";
+import { Suspense, useEffect, useState } from "react";
 
-export default function LoginPage() {
-  const [code, setCode] = useState("");
-  const [name, setName] = useState("");
-  const [selectedGrade, setSelectedGrade] = useState("الصف الخامس الابتدائي");
+function LessonsContent() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const grade = searchParams.get("grade") || "الصف الخامس الابتدائي";
+  const [isAuthorized, setIsAuthorized] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (code === "123456") {
-      window.location.href = "/lessons?grade=" + encodeURIComponent(selectedGrade);
+  // التحقق من أن الطالب سجل دخوله في الصفحة الرئيسية
+  useEffect(() => {
+    const savedUser = localStorage.getItem("ghanem_user_name");
+    if (!savedUser) {
+      // إذا لم يسجل دخول، يرجعه فوراً للصفحة الرئيسية
+      router.replace("/");
     } else {
-      alert("عذراً، كود الاشتراك غير صحيح");
+      setIsAuthorized(true);
     }
-  };
+  }, [router]);
+
+  const lessons = [
+    { id: 1, title: "ترحيب ومقدمة المنهج", duration: "10:00", type: "فيديو" },
+    { id: 2, title: "الوحدة الأولى: الدرس الأول", duration: "15:00", type: "فيديو" },
+  ];
+
+  if (!isAuthorized) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center p-4 font-sans" dir="rtl">
-      <div className="max-w-md w-full bg-white rounded-3xl shadow-2xl p-8 border border-blue-100">
-        
-        {/* الجزء الترحيبي الجديد */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-black text-blue-600 mb-2 tracking-tight">
-            Ghanem Academy
-          </h1>
-          <p className="text-gray-500 font-medium">Welcome to Ghanem Academy</p>
-          <div className="h-1 w-20 bg-blue-600 mx-auto mt-4 rounded-full"></div>
-        </div>
+    <div className="max-w-4xl mx-auto p-6 text-right" dir="rtl">
+      <Link href="/" className="text-blue-600 font-bold mb-6 inline-block">⬅️ عودة للرئيسية</Link>
+      
+      <header className="bg-blue-600 text-white p-8 rounded-3xl mb-8 shadow-lg">
+        <h1 className="text-3xl font-black mb-2">{grade}</h1>
+        <p className="opacity-90">مرحباً بك في قائمة الدروس</p>
+      </header>
 
-        <form onSubmit={handleLogin} className="space-y-6">
-          <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">اسم الطالب</label>
-            <input
-              type="text"
-              required
-              className="w-full px-5 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-right"
-              placeholder="اكتب اسمك هنا"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
+      <div className="space-y-4">
+        {lessons.map((lesson) => (
+          <div key={lesson.id} className="bg-white p-6 rounded-2xl shadow-sm border flex justify-between items-center">
+            <div className="flex items-center gap-4">
+              <span className="text-2xl">{lesson.type === "فيديو" ? "📺" : "📝"}</span>
+              <div>
+                <h3 className="font-bold text-gray-800">{lesson.title}</h3>
+                <span className="text-gray-400 text-sm">المدة: {lesson.duration}</span>
+              </div>
+            </div>
+            <button className="bg-blue-600 text-white px-6 py-2 rounded-full font-bold">بدء</button>
           </div>
-
-          <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">كود الاشتراك</label>
-            <input
-              type="password"
-              required
-              className="w-full px-5 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-center"
-              placeholder="••••••"
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">اختر المرحلة الدراسية</label>
-            <select
-              className="w-full px-5 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none bg-white text-right"
-              value={selectedGrade}
-              onChange={(e) => setSelectedGrade(e.target.value)}
-            >
-              <option>الصف الثاني الابتدائي</option>
-              <option>الصف الثالث الابتدائي</option>
-              <option>الصف الرابع الابتدائي</option>
-              <option>الصف الخامس الابتدائي</option>
-            </select>
-          </div>
-
-          <button
-            type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg transform transition hover:-translate-y-1 active:scale-95"
-          >
-            دخول للمنصة
-          </button>
-        </form>
-        
-        <p className="text-center text-gray-400 text-xs mt-8">
-          جميع الحقوق محفوظة © مستر محمد غانم 2026
-        </p>
+        ))}
       </div>
     </div>
+  );
+}
+
+export default function LessonsPage() {
+  return (
+    <Suspense fallback={<div className="text-center mt-20 font-bold">جاري تحميل الدروس...</div>}>
+      <LessonsContent />
+    </Suspense>
   );
 }
