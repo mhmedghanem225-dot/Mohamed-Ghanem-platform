@@ -11,9 +11,7 @@ function LessonsContent() {
   const [loading, setLoading] = useState(true);
   const [studentName, setStudentName] = useState("");
 
-  // رقم الواتساب الجديد الخاص بك
   const WHATSAPP_NUMBER = "201113613894"; 
-
   const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ-ZJwP0z4SVM4XfAPevqPqsSvbSBRy18i_rbgfVNGYVHBZj10aHtdHqhMj8kKKkI0WHwWLDLFxXniO/pub?output=csv";
 
   useEffect(() => {
@@ -48,7 +46,7 @@ function LessonsContent() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24" dir="rtl">
-      {/* الهيدر ثابت */}
+      {/* الهيدر الأزرق */}
       <div className="bg-blue-600 pt-10 pb-20 px-6 rounded-b-[3.5rem] shadow-xl relative overflow-hidden text-right">
         <div className="flex justify-between items-center relative z-10 mb-6">
           <button onClick={() => { localStorage.removeItem("ghanem_session"); router.replace("/"); }} className="bg-white/20 backdrop-blur-md text-white px-4 py-2 rounded-xl font-bold text-sm">🚪 خروج</button>
@@ -59,12 +57,18 @@ function LessonsContent() {
         <div className="relative z-10 text-white">
           <p className="text-blue-100 font-bold text-sm mb-1">أهلاً بك يا بطل، {studentName} 👋</p>
           <h1 className="text-3xl font-black mb-1">{grade}</h1>
-          <p className="opacity-80 text-sm font-medium">جاهز لرحلة التعلم اليوم؟ 🚀</p>
+          
+          {/* زر لوحة الشرف الذهبي - تأكد من وجود هذا الجزء */}
+          <button 
+            onClick={() => router.push('/honor-roll')}
+            className="mt-4 bg-yellow-400 hover:bg-yellow-500 text-yellow-900 px-5 py-2 rounded-2xl font-black text-[11px] shadow-lg flex items-center gap-2 transition-all active:scale-95"
+          >
+            👑 لوحة أبطال الأسبوع
+          </button>
         </div>
         <div className="absolute -left-10 -bottom-10 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
       </div>
 
-      {/* منطقة الدروس ثابتة */}
       <div className="max-w-md mx-auto px-4 mt-6">
         {loading ? (
           <div className="bg-white p-10 rounded-[2.5rem] shadow-xl text-center font-bold text-blue-600 animate-pulse text-sm">جاري جلب دروسك الممتعة...</div>
@@ -105,7 +109,7 @@ function LessonsContent() {
         )}
       </div>
 
-      {/* زر الواتساب بالرقم الجديد */}
+      {/* زر الواتساب */}
       <a 
         href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(`أهلاً مستر محمد، أنا الطالب ${studentName} وعندي سؤال بخصوص ${grade}`)}`}
         target="_blank"
