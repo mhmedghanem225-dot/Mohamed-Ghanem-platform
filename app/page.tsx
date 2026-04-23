@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 
+// تعريف أنواع البيانات
 interface Grade { id: number; name: string; icon: string; }
 interface Stages { primary: Grade[]; prep: Grade[]; }
 
@@ -30,12 +31,9 @@ export default function HomePage() {
     ]
   };
 
-  // وظيفة التحقق: لو الطالب سجل قبل كده، النافذة مش هتظهر له تاني
   useEffect(() => {
-    const savedUser = localStorage.getItem("ghanem_user_logged");
-    if (savedUser) {
-      setUser(savedUser);
-    }
+    const savedUser = localStorage.getItem("ghanem_user_name");
+    if (savedUser) setUser(savedUser);
     setIsLoading(false);
   }, []);
 
@@ -46,42 +44,45 @@ export default function HomePage() {
       return;
     }
     if (!VALID_CODES.includes(codeInput.toUpperCase())) {
-      setError("كود الاشتراك غير صحيح");
+      setError("كود الاشتراك غير صحيح.. اطلبه من مستر محمد");
       return;
     }
-    // حفظ الدخول عشان النافذة تختفي تماماً
-    localStorage.setItem("ghanem_user_logged", nameInput);
+    localStorage.setItem("ghanem_user_name", nameInput);
     setUser(nameInput);
     setError("");
   };
 
-  if (isLoading) return null;
+  const goToLessons = (gradeName: string) => {
+    window.location.href = `/lessons?grade=${encodeURIComponent(gradeName)}`;
+  };
 
-  // النافذة دي هتظهر "مرة واحدة بس" في العمر على جهاز الطالب
+  if (isLoading) return <div className="text-center mt-20 font-bold">جاري التحميل...</div>;
+
+  // 1. شاشة تسجيل الدخول
   if (!user) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4" dir="rtl">
-        <div className="max-w-md w-full p-8 bg-white rounded-[2.5rem] shadow-2xl border-t-8 border-blue-600">
-          <h1 className="text-2xl font-black text-center text-gray-800 mb-6">منصة غانم التعليمية 👨‍🎓</h1>
-          <form onSubmit={handleLogin} className="space-y-4">
-            <input 
-              type="text" 
-              value={nameInput}
-              onChange={(e) => setNameInput(e.target.value)}
-              placeholder="اسم الطالب"
-              className="w-full p-4 rounded-xl border-2 border-gray-100 outline-none text-black"
-            />
-            <input 
-              type="text" 
-              value={codeInput}
-              onChange={(e) => setCodeInput(e.target.value)}
-              placeholder="كود الاشتراك"
-              className="w-full p-4 rounded-xl border-2 border-gray-100 text-center font-bold text-blue-600 outline-none"
-            />
-            {error && <p className="text-red-500 text-sm font-bold text-center">{error}</p>}
-            <button type="submit" className="w-full bg-blue-600 text-white p-4 rounded-xl font-black">دخول للمنصة</button>
-          </form>
-        </div>
+      <div className="max-w-md mx-auto mt-20 p-8 bg-white rounded-[2.5rem] shadow-2xl border-t-8 border-blue-600" dir="rtl">
+        <h1 className="text-2xl font-black text-center text-gray-800 mb-6">تسجيل دخول الطلاب 👨‍🎓</h1>
+        <form onSubmit={handleLogin} className="space-y-4">
+          <input 
+            type="text" 
+            value={nameInput}
+            onChange={(e) => setNameInput(e.target.value)}
+            placeholder="اسم الطالب"
+            className="w-full p-4 rounded-xl border-2 border-gray-100 outline-none text-black"
+          />
+          <input 
+            type="text" 
+            value={codeInput}
+            onChange={(e) => setCodeInput(e.target.value)}
+            placeholder="كود الاشتراك"
+            className="w-full p-4 rounded-xl border-2 border-gray-100 text-center font-bold text-blue-600 outline-none"
+          />
+          {error && <p className="text-red-500 text-sm font-bold text-center">{error}</p>}
+          <button type="submit" className="w-full bg-blue-600 text-white p-4 rounded-xl font-black hover:bg-blue-700 transition">
+            دخول للمنصة
+          </button>
+        </form>
       </div>
     );
   }
@@ -93,6 +94,7 @@ export default function HomePage() {
         <p className="text-xl text-gray-600">اختر مرحلتك الدراسية</p>
       </header>
 
+      {/* 2. شاشة اختيار المرحلة */}
       {!selectedStage ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <button onClick={() => setSelectedStage('primary')} className="p-10 bg-yellow-400 rounded-[3rem] shadow-2xl hover:scale-105 transition-all border-8 border-white">
@@ -105,13 +107,16 @@ export default function HomePage() {
           </button>
         </div>
       ) : (
+        /* 3. شاشة اختيار الصف */
         <div>
-          <button onClick={() => setSelectedStage(null)} className="mb-8 text-blue-600 font-bold mx-auto hover:underline">⬅️ العودة للمراحل</button>
+          <button onClick={() => setSelectedStage(null)} className="mb-8 text-blue-600 font-bold flex items-center gap-2 mx-auto hover:underline">
+            ⬅️ العودة للمراحل
+          </button>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {stagesData[selectedStage].map((grade) => (
               <div 
                 key={grade.id} 
-                onClick={() => window.location.href = `/lessons?grade=${encodeURIComponent(grade.name)}`}
+                onClick={() => goToLessons(grade.name)} 
                 className="p-6 bg-white rounded-2xl shadow-md border-2 border-gray-100 hover:border-blue-500 transition-all cursor-pointer flex items-center gap-4 text-right"
               >
                 <span className="text-3xl">{grade.icon}</span>
