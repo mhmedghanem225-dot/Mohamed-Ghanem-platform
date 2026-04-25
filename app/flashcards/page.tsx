@@ -20,8 +20,8 @@ function FlashcardsContent() {
     const fetchSheetData = async () => {
       try {
         const res = await fetch(`${SHEET_CSV_URL}&t=${Date.now()}`);
-        const text = await res.text();
-        const rows = text.split(/\r?\n/);
+        const data = await res.text();
+        const rows = data.split(/\r?\n/);
         const lessonRow = rows.find(r => {
             const cols = r.split(",");
             return cols[0]?.trim() === grade && cols[1]?.trim() === lessonTitle;
@@ -47,7 +47,6 @@ function FlashcardsContent() {
   const handleNext = () => {
     setIsFlipped(false);
     if (currentIndex === cards.length - 1) {
-      // إضافة النقاط عند النهاية
       const currentPoints = parseInt(localStorage.getItem("ghanem_points") || "0");
       localStorage.setItem("ghanem_points", (currentPoints + 50).toString());
       setShowWinModal(true);
@@ -63,42 +62,60 @@ function FlashcardsContent() {
     }
   };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center font-black text-orange-600 animate-pulse">Loading...</div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center font-bold text-orange-600 animate-pulse">جاري التحميل...</div>;
 
   return (
     <div className="min-h-screen bg-[#FDF8F3] flex flex-col items-center p-6" dir="rtl">
       <div className="w-full max-w-md flex justify-between items-center mb-8">
-        <button onClick={() => router.back()} className="bg-white px-5 py-2 rounded-2xl shadow-sm font-bold text-orange-600 border border-orange-50 text-xs">🔙 رجوع</button>
-        <span className="text-[10px] font-black bg-orange-100 px-4 py-2 rounded-2xl text-gray-700 truncate max-w-[150px]">{lessonTitle}</span>
+        <button onClick={() => router.back()} className="bg-white px-5 py-2 rounded-2xl shadow-sm font-bold text-orange-600 border border-orange-50 text-sm active:scale-90 transition-all">🔙 رجوع</button>
+        <h2 className="font-black text-gray-800 text-[10px] bg-orange-100 px-4 py-2 rounded-2xl truncate max-w-[150px]">{lessonTitle}</h2>
       </div>
 
       <div className="w-full max-w-sm aspect-[3/4] perspective-1000" onClick={() => setIsFlipped(!isFlipped)}>
         <div className={`relative w-full h-full transition-all duration-700 transform-style-3d ${isFlipped ? 'rotate-y-180' : ''}`}>
-          <div className="absolute w-full h-full backface-hidden bg-white rounded-[3.5rem] shadow-2xl border-b-[12px] border-orange-200 flex flex-col items-center justify-center p-10">
+          {/* وجه الكارت الأمامي - التصميم الأصلي */}
+          <div className="absolute w-full h-full backface-hidden bg-white rounded-[3.5rem] shadow-2xl border-b-[12px] border-orange-200 flex flex-col items-center justify-center p-10 text-center">
+            <span className="text-orange-400 font-bold text-[10px] mb-6 tracking-widest uppercase">كيف تنطقها؟</span>
             <h1 className="text-4xl font-black text-gray-800 mb-8">{cards[currentIndex]?.en}</h1>
             <button onClick={(e) => { e.stopPropagation(); speak(cards[currentIndex]?.en); }} className="w-20 h-20 bg-orange-50 text-orange-600 rounded-full flex items-center justify-center text-3xl shadow-inner active:scale-90 border-2 border-white">🔊</button>
             <p className="mt-12 text-gray-300 text-[10px] font-bold">المس الكارت للمعنى ✨</p>
           </div>
+          {/* وجه الكارت الخلفي - التصميم الأصلي */}
           <div className="absolute w-full h-full backface-hidden rotate-y-180 bg-gradient-to-br from-orange-400 to-orange-600 rounded-[3.5rem] shadow-2xl flex flex-col items-center justify-center p-10 text-center text-white">
-            <h2 className="text-5xl font-black mb-8">{cards[currentIndex]?.ar}</h2>
+            <span className="text-orange-100 font-bold text-[10px] mb-6 tracking-widest uppercase">المعنى بالعربي</span>
+            <h2 className="text-5xl font-black mb-8 drop-shadow-lg">{cards[currentIndex]?.ar}</h2>
+            <div className="w-16 h-1 bg-white/30 rounded-full"></div>
           </div>
         </div>
       </div>
 
-      <div className="mt-10 w-full max-w-sm flex gap-3">
-        <button onClick={(e) => {e.stopPropagation(); handlePrev();}} disabled={currentIndex === 0} className={`flex-1 py-5 rounded-[2rem] font-black transition-all ${currentIndex === 0 ? 'bg-gray-100 text-gray-300' : 'bg-white text-gray-800 shadow-md active:scale-95'}`}>⬅️</button>
-        <button onClick={(e) => {e.stopPropagation(); handleNext();}} className="flex-[3] bg-gray-900 text-white py-5 rounded-[2rem] font-black shadow-xl active:scale-95 transition-all text-lg">
-          {currentIndex === cards.length - 1 ? 'إنهاء التحدي 🏁' : 'التالي ➡️'}
+      {/* أزرار التحكم الجديدة المضافة */}
+      <div className="mt-10 w-full max-w-sm flex gap-4">
+        <button 
+          onClick={(e) => {e.stopPropagation(); handlePrev();}} 
+          disabled={currentIndex === 0} 
+          className={`flex-1 py-5 rounded-[2.5rem] font-black shadow-md transition-all flex items-center justify-center ${currentIndex === 0 ? 'bg-gray-50 text-gray-200' : 'bg-white text-gray-800 active:scale-95'}`}
+        >
+          ⬅️ السابق
+        </button>
+        <button 
+          onClick={(e) => {e.stopPropagation(); handleNext();}} 
+          className="flex-[2] bg-gray-900 text-white py-5 rounded-[2.5rem] font-black shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2 text-lg"
+        >
+          {currentIndex === cards.length - 1 ? 'إنهاء واستلام 🏆' : 'التالي ➡️'}
         </button>
       </div>
 
+      <p className="mt-6 text-gray-400 font-bold text-xs">بطاقة {currentIndex + 1} من {cards.length}</p>
+
+      {/* نافذة الفوز */}
       {showWinModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm">
           <div className="bg-white rounded-[3rem] p-10 text-center shadow-2xl max-w-xs w-full animate-in zoom-in duration-300">
-            <div className="text-7xl mb-4">🏆</div>
+            <div className="text-7xl mb-4 animate-bounce">🏆</div>
             <h2 className="text-3xl font-black text-gray-800 mb-2">عاش يا بطل!</h2>
-            <p className="text-gray-500 font-bold text-sm mb-8">حصلت على <span className="text-orange-600">50 نقطة</span> لمجهودك الرائع اليوم</p>
-            <button onClick={() => router.back()} className="w-full bg-orange-500 text-white py-4 rounded-2xl font-black shadow-lg active:scale-95 transition-all">استلام النقاط ✅</button>
+            <p className="text-gray-500 font-bold text-sm mb-8">لقد حصلت على <span className="text-orange-600">50 نقطة</span> إضافية في رصيدك</p>
+            <button onClick={() => router.back()} className="w-full bg-orange-500 text-white py-4 rounded-2xl font-black shadow-lg shadow-orange-100 active:scale-95 transition-all">تم ✅</button>
           </div>
         </div>
       )}
