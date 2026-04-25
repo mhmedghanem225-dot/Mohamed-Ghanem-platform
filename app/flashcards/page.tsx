@@ -13,10 +13,17 @@ function FlashcardsContent() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [showWinModal, setShowWinModal] = useState(false);
+  const [alreadyCompleted, setAlreadyCompleted] = useState(false);
 
   const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ-ZJwP0z4SVM4XfAPevqPqsSvbSBRy18i_rbgfVNGYVHBZj10aHtdHqhMj8kKKkI0WHwWLDLFxXniO/pub?output=csv";
 
   useEffect(() => {
+    // التحقق هل الدرس ده خلص قبل كدة؟
+    const completedLessons = JSON.parse(localStorage.getItem("ghanem_completed_tasks") || "[]");
+    if (completedLessons.includes(lessonTitle)) {
+      setAlreadyCompleted(true);
+    }
+
     const fetchSheetData = async () => {
       try {
         const res = await fetch(`${SHEET_CSV_URL}&t=${Date.now()}`);
@@ -47,8 +54,16 @@ function FlashcardsContent() {
   const handleNext = () => {
     setIsFlipped(false);
     if (currentIndex === cards.length - 1) {
-      const currentPoints = parseInt(localStorage.getItem("ghanem_points") || "0");
-      localStorage.setItem("ghanem_points", (currentPoints + 50).toString());
+      // إذا لم يكن الدرس قد اكتمل من قبل، أضف النقاط
+      if (!alreadyCompleted) {
+        const currentPoints = parseInt(localStorage.getItem("ghanem_points") || "0");
+        localStorage.setItem("ghanem_points", (currentPoints + 50).toString());
+        
+        // سجل اسم الدرس في قائمة الدروس المكتملة
+        const completedLessons = JSON.parse(localStorage.getItem("ghanem_completed_tasks") || "[]");
+        completedLessons.push(lessonTitle);
+        localStorage.setItem("ghanem_completed_tasks", JSON.stringify(completedLessons));
+      }
       setShowWinModal(true);
     } else {
       setTimeout(() => setCurrentIndex(prev => prev + 1), 200);
@@ -73,14 +88,12 @@ function FlashcardsContent() {
 
       <div className="w-full max-w-sm aspect-[3/4] perspective-1000" onClick={() => setIsFlipped(!isFlipped)}>
         <div className={`relative w-full h-full transition-all duration-700 transform-style-3d ${isFlipped ? 'rotate-y-180' : ''}`}>
-          {/* وجه الكارت الأمامي - التصميم الأصلي */}
           <div className="absolute w-full h-full backface-hidden bg-white rounded-[3.5rem] shadow-2xl border-b-[12px] border-orange-200 flex flex-col items-center justify-center p-10 text-center">
             <span className="text-orange-400 font-bold text-[10px] mb-6 tracking-widest uppercase">كيف تنطقها؟</span>
             <h1 className="text-4xl font-black text-gray-800 mb-8">{cards[currentIndex]?.en}</h1>
             <button onClick={(e) => { e.stopPropagation(); speak(cards[currentIndex]?.en); }} className="w-20 h-20 bg-orange-50 text-orange-600 rounded-full flex items-center justify-center text-3xl shadow-inner active:scale-90 border-2 border-white">🔊</button>
             <p className="mt-12 text-gray-300 text-[10px] font-bold">المس الكارت للمعنى ✨</p>
           </div>
-          {/* وجه الكارت الخلفي - التصميم الأصلي */}
           <div className="absolute w-full h-full backface-hidden rotate-y-180 bg-gradient-to-br from-orange-400 to-orange-600 rounded-[3.5rem] shadow-2xl flex flex-col items-center justify-center p-10 text-center text-white">
             <span className="text-orange-100 font-bold text-[10px] mb-6 tracking-widest uppercase">المعنى بالعربي</span>
             <h2 className="text-5xl font-black mb-8 drop-shadow-lg">{cards[currentIndex]?.ar}</h2>
@@ -89,7 +102,6 @@ function FlashcardsContent() {
         </div>
       </div>
 
-      {/* أزرار التحكم الجديدة المضافة */}
       <div className="mt-10 w-full max-w-sm flex gap-4">
         <button 
           onClick={(e) => {e.stopPropagation(); handlePrev();}} 
@@ -108,13 +120,16 @@ function FlashcardsContent() {
 
       <p className="mt-6 text-gray-400 font-bold text-xs">بطاقة {currentIndex + 1} من {cards.length}</p>
 
-      {/* نافذة الفوز */}
       {showWinModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm">
           <div className="bg-white rounded-[3rem] p-10 text-center shadow-2xl max-w-xs w-full animate-in zoom-in duration-300">
             <div className="text-7xl mb-4 animate-bounce">🏆</div>
             <h2 className="text-3xl font-black text-gray-800 mb-2">عاش يا بطل!</h2>
-            <p className="text-gray-500 font-bold text-sm mb-8">لقد حصلت على <span className="text-orange-600">50 نقطة</span> إضافية في رصيدك</p>
+            <p className="text-gray-500 font-bold text-sm mb-8">
+              {alreadyCompleted 
+                ? "لقد راجعت هذا الدرس بنجاح، استمر في التألق! ✨" 
+                : "لقد حصلت على 50 نقطة إضافية في رصيدك! 💰"}
+            </p>
             <button onClick={() => router.back()} className="w-full bg-orange-500 text-white py-4 rounded-2xl font-black shadow-lg shadow-orange-100 active:scale-95 transition-all">تم ✅</button>
           </div>
         </div>
