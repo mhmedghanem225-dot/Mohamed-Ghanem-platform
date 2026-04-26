@@ -12,10 +12,9 @@ export default function AdminDashboard() {
     if (!savedSession) { router.replace("/"); return; }
     
     const userData = JSON.parse(savedSession);
-    const myEmail = "mhmedghanem225@gmail.com"; // 👈 اكتب إيميلك هنا بدقة
+    const myEmail = "mhmedghanem225@gmail.com"; // 👈 اكتب إيميلك هنا بالظبط
 
     if (userData.email.trim().toLowerCase() !== myEmail.trim().toLowerCase()) { 
-      console.log("Access Denied for:", userData.email);
       router.replace("/profile"); 
       return; 
     }
@@ -28,13 +27,14 @@ export default function AdminDashboard() {
       const data = await res.text();
       const rows = data.split(/\r?\n/).filter(row => row.trim() !== "");
       
+      // نبدأ من i=1 عشان نتخطى صف العناوين
       const parsedStudents = rows.slice(1).map(row => {
         const columns = row.split(",");
         return {
-          name: columns[0] || "بدون اسم",
-          quizScore: columns[4] || "0",     // عمود E
-          completedCount: columns[5] || "0", // عمود F
-          email: columns[6] || "لا يوجد"    // عمود G
+          name: columns[0] || "---",
+          quizScore: columns[4] || "0",     // العمود E
+          completedCount: columns[5] || "0", // العمود F
+          email: columns[6] || "لا يوجد"    // العمود G
         };
       });
 
@@ -44,29 +44,31 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6" dir="rtl">
-      <h1 className="text-2xl font-black text-center mb-6 text-blue-900">لوحة تحكم المستر 👨‍🏫</h1>
-      <div className="max-w-4xl mx-auto bg-white rounded-3xl shadow-xl overflow-hidden">
-        <table className="w-full text-right">
-          <thead className="bg-blue-600 text-white">
-            <tr>
-              <th className="p-4">الطالب</th>
-              <th className="p-4">الكويز (E)</th>
-              <th className="p-4">الدروس (F)</th>
-              <th className="p-4">الإيميل (G)</th>
-            </tr>
-          </thead>
-          <tbody>
-            {students.map((s, i) => (
-              <tr key={i} className="border-b">
-                <td className="p-4 font-bold">{s.name}</td>
-                <td className="p-4 text-green-600 font-bold">{s.quizScore}%</td>
-                <td className="p-4 text-blue-600">{s.completedCount}</td>
-                <td className="p-4 text-gray-400 text-xs">{s.email}</td>
+    <div className="min-h-screen bg-gray-50 p-4 pb-20" dir="rtl">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-2xl font-black text-center my-8 text-blue-900">لوحة تحكم المستر 👨‍🏫</h1>
+        <div className="bg-white rounded-[2rem] shadow-xl overflow-hidden border border-gray-100">
+          <table className="w-full text-right">
+            <thead className="bg-blue-600 text-white text-xs uppercase font-bold">
+              <tr>
+                <th className="p-5">اسم الطالب</th>
+                <th className="p-5 text-center">الكويز (E)</th>
+                <th className="p-5 text-center">الدروس (F)</th>
+                <th className="p-5 text-center">الإيميل (G)</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {students.map((s, i) => (
+                <tr key={i} className="border-t border-gray-50 hover:bg-blue-50 transition-colors">
+                  <td className="p-5 font-bold text-gray-800">{s.name}</td>
+                  <td className="p-5 text-center font-black text-green-600">{s.quizScore}%</td>
+                  <td className="p-5 text-center font-bold text-blue-600">{s.completedCount}</td>
+                  <td className="p-5 text-center text-[10px] text-gray-400 font-mono">{s.email}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
