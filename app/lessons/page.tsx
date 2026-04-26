@@ -6,7 +6,9 @@ import { Suspense, useEffect, useState } from "react";
 function LessonsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const grade = searchParams.get("grade") || "";
+  
+  // حل المشكلة: محاولة جلب الصف من الرابط، وإذا لم يوجد نجلب آخر صف محفوظ
+  const [grade, setGrade] = useState("");
   const [lessons, setLessons] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [studentName, setStudentName] = useState("");
@@ -17,35 +19,46 @@ function LessonsContent() {
     if (!savedSession) { router.replace("/"); return; }
     const userData = JSON.parse(savedSession);
     setStudentName(userData.name);
+    setPoints(parseInt(localStorage.getItem("ghanem_points") || "0"));
 
-    const savedPoints = localStorage.getItem("ghanem_points") || "0";
-    setPoints(parseInt(savedPoints));
+    // تحديد الصف الدراسي (من الرابط أو الذاكرة)
+    const gradeFromURL = searchParams.get("grade");
+    const lastSavedGrade = localStorage.getItem("last_grade");
+    const currentGrade = gradeFromURL || lastSavedGrade || "";
+    
+    if (currentGrade) {
+      setGrade(currentGrade);
+      localStorage.setItem("last_grade", currentGrade); // حفظ الصف للرجوع إليه لاحقاً
+      fetchLessons(currentGrade);
+    } else {
+      setLoading(false); // لو مفيش صف خالص يوقف التحميل
+    }
+  }, [searchParams, router]);
 
-    const fetchLessons = async () => {
-      try {
-        const res = await fetch(`https://docs.google.com/spreadsheets/d/e/2PACX-1vQ-ZJwP0z4SVM4XfAPevqPqsSvbSBRy18i_rbgfVNGYVHBZj10aHtdHqhMj8kKKkI0WHwWLDLFxXniO/pub?output=csv&t=${Date.now()}`);
-        const data = await res.text();
-        const rows = data.split("\n").map(row => row.split(","));
-        const filtered = rows.slice(1)
-          .map(r => ({ 
-            grade: r[0]?.trim(), 
-            title: r[1]?.trim(), 
-            video: r[2]?.trim(), 
-            pdf: r[3]?.trim(), 
-            duration: r[4]?.trim(),
-            keywords: r[6]?.trim() 
-          }))
-          .filter(i => i.grade === grade);
-        setLessons(filtered);
-        setLoading(false);
-      } catch (e) { setLoading(false); }
-    };
-    if (grade) fetchLessons();
-  }, [grade, router]);
+  const fetchLessons = async (targetGrade: string) => {
+    try {
+      setLoading(true);
+      const res = await fetch(`https://docs.google.com/spreadsheets/d/e/2PACX-1vQ-ZJwP0z4SVM4XfAPevqPqsSvbSBRy18i_rbgfVNGYVHBZj10aHtdHqhMj8kKKkI0WHwWLDLFxXniO/pub?output=csv&t=${Date.now()}`);
+      const data = await res.text();
+      const rows = data.split("\n").map(row => row.split(","));
+      const filtered = rows.slice(1)
+        .map(r => ({ 
+          grade: r[0]?.trim(), 
+          title: r[1]?.trim(), 
+          video: r[2]?.trim(), 
+          pdf: r[3]?.trim(), 
+          duration: r[4]?.trim(),
+          keywords: r[6]?.trim() 
+        }))
+        .filter(i => i.grade === targetGrade);
+      setLessons(filtered);
+      setLoading(false);
+    } catch (e) { setLoading(false); }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 pb-28" dir="rtl">
-      {/* Header */}
+      {/* Header - نفس التصميم بدون أي تغيير */}
       <div className="bg-[#1D63ED] pt-8 pb-16 px-6 rounded-b-[3rem] shadow-xl relative overflow-hidden text-right">
         <div className="flex justify-between items-center relative z-10 mb-4">
           <button onClick={() => router.push('/profile')} className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-lg border border-white/30 active:scale-90 transition-all">👤</button>
@@ -97,15 +110,13 @@ function LessonsContent() {
         )}
       </div>
 
-      {/* Navigation Bar (Reduced Size & Unified) */}
+      {/* Navigation Bar - نفس الشكل الموحد المعتمد */}
       <div className="fixed bottom-5 left-10 right-10 bg-white/95 backdrop-blur-md p-2 rounded-[2rem] shadow-2xl border border-gray-100 flex justify-around items-center z-50">
-        {/* Profile on Right */}
         <button onClick={() => router.push('/profile')} className="flex flex-col items-center gap-0.5 p-1 active:scale-75 transition-all">
           <span className="text-xl opacity-60">👤</span>
           <span className="text-[9px] font-black text-gray-400">Profile</span>
         </button>
 
-        {/* Lessons in Center (Highlighted) */}
         <button className="flex flex-col items-center gap-0.5 p-1 relative">
           <div className="bg-[#1D63ED] text-white w-12 h-12 flex items-center justify-center rounded-full shadow-lg -mt-8 border-[3px] border-gray-50 transition-all">
             <span className="text-xl">📖</span>
@@ -113,14 +124,11 @@ function LessonsContent() {
           <span className="text-[9px] font-black text-[#1D63ED]">Lessons</span>
         </button>
 
-        {/* Leaders on Left */}
         <button onClick={() => router.push('/leaderboard')} className="flex flex-col items-center gap-0.5 p-1 active:scale-75 transition-all">
           <span className="text-xl opacity-60">👑</span>
           <span className="text-[9px] font-black text-gray-400">Leaders</span>
         </button>
       </div>
-
-      <footer className="mt-8 text-center text-gray-300 text-[9px] font-bold pb-4">Ghanem Academy • 2026</footer>
     </div>
   );
 }
