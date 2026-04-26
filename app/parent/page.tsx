@@ -10,7 +10,7 @@ export default function ParentPage() {
     if(!email) return;
     setLoading(true);
     try {
-      const res = await fetch(`https://docs.google.com/spreadsheets/d/e/2PACX-1vQ-ZJwP0z4SVM4XfAPevqPqsSvbSBRy18i_rbgfVNGYVHBZj10aHtdHqhMj8kKKkI0WHwWLDLFxXniO/pub?output=csv&t=${Date.now()}`);
+      const res = await fetch(`https://docs.google.com/spreadsheets/d/e/2PACX-1vQ-ZJwP0z4SVM4XfAPevqPqsSvbSBRy18i_rbgfVNGYVHBZj10aHtdHqhMj8kKKkI0WHwWLDLFxXniO/pubhtml=${Date.now()}`);
       const data = await res.text();
       const rows = data.split(/\r?\n/).map(row => row.split(","));
       
