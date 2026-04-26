@@ -1,80 +1,74 @@
 "use client";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export default function AdminDashboard() {
+  const [pass, setPass] = useState("");
+  const [isAuth, setIsAuth] = useState(false);
   const [students, setStudents] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const router = useRouter();
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const savedSession = localStorage.getItem("ghanem_session");
-    if (!savedSession) { router.replace("/"); return; }
-    const userData = JSON.parse(savedSession);
-    
-    // تم تثبيت إيميلك الشخصي هنا
-    const myEmail = "mhmedghanem225@gmail.com"; 
-
-    if (userData.email.trim().toLowerCase() !== myEmail.trim().toLowerCase()) { 
-      router.replace("/profile"); 
-      return; 
+  const login = async () => {
+    if (pass === "012017") {
+      setIsAuth(true);
+      fetchData();
+    } else {
+      alert("كلمة السر خطأ!");
     }
-    fetchData();
-  }, [router]);
+  };
 
   const fetchData = async () => {
+    setLoading(true);
     try {
+      // الرابط ده بيسحب أول ورقة ظاهرة في الشيت (Sheet1)
       const res = await fetch(`https://docs.google.com/spreadsheets/d/e/2PACX-1vQ-ZJwP0z4SVM4XfAPevqPqsSvbSBRy18i_rbgfVNGYVHBZj10aHtdHqhMj8kKKkI0WHwWLDLFxXniO/pub?output=csv&t=${Date.now()}`);
       const data = await res.text();
       const rows = data.split(/\r?\n/).map(row => row.split(","));
-      const headers = rows[0].map(h => h.replace(/"/g, "").trim());
-
-      // البحث عن أرقام الأعمدة بناءً على العناوين في الشيت
-      const quizIdx = headers.findIndex(h => h.includes("كويز") || h.includes("Quiz") || h.includes("E"));
-      const lessonIdx = headers.findIndex(h => h.includes("دروس") || h.includes("Lesson") || h.includes("F"));
-      const emailIdx = headers.findIndex(h => h.includes("إيميل") || h.includes("Email") || h.includes("G"));
-
+      
       const parsed = rows.slice(1).filter(r => r[0]).map(r => ({
-        name: r[0]?.replace(/"/g, "") || "---",
-        quiz: r[quizIdx]?.replace(/"/g, "") || "0",
-        lesson: r[lessonIdx]?.replace(/"/g, "") || "0",
-        email: r[emailIdx]?.replace(/"/g, "") || "---"
+        name: r[0]?.replace(/"/g, ""),
+        quiz: r[4]?.replace(/"/g, "") || "0", // العمود E
+        lessons: r[5]?.replace(/"/g, "") || "0", // العمود F
+        email: r[6]?.replace(/"/g, "") || "---" // العمود G
       }));
-
       setStudents(parsed);
-    } catch (e) { console.error(e); }
+    } catch (e) { alert("حدث خطأ في جلب البيانات"); }
     setLoading(false);
   };
 
+  if (!isAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100" dir="rtl">
+        <div className="bg-white p-8 rounded-3xl shadow-xl text-center">
+          <h2 className="mb-4 font-black">دخول المستر 👨‍🏫</h2>
+          <input type="password" onChange={(e)=>setPass(e.target.value)} className="border p-3 rounded-xl mb-4 block w-full text-center" placeholder="كلمة السر" />
+          <button onClick={login} className="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold w-full">دخول</button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50 p-4 font-sans" dir="rtl">
-      <div className="max-w-4xl mx-auto bg-white rounded-[2rem] shadow-2xl overflow-hidden border">
-        <div className="bg-[#1D63ED] p-6 text-white text-center">
-          <h1 className="text-xl font-black">لوحة المتابعة الشاملة 📈</h1>
-          <p className="text-[10px] opacity-80 mt-1">مرحباً بك يا مستر محمد</p>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-right text-sm">
-            <thead className="bg-gray-100 border-b">
-              <tr>
-                <th className="p-4">اسم الطالب</th>
-                <th className="p-4 text-center">الكويز</th>
-                <th className="p-4 text-center">الدروس</th>
-                <th className="p-4 text-center">الإيميل</th>
+    <div className="p-4 bg-gray-50 min-h-screen" dir="rtl">
+      <h1 className="text-center font-black text-xl mb-6">لوحة متابعة الطلاب 📊</h1>
+      <div className="bg-white rounded-2xl shadow overflow-hidden">
+        <table className="w-full text-right text-sm">
+          <thead className="bg-blue-600 text-white">
+            <tr>
+              <th className="p-4">الطالب</th>
+              <th className="p-4 text-center">كويز</th>
+              <th className="p-4 text-center">دروس</th>
+            </tr>
+          </thead>
+          <tbody>
+            {students.map((s, i) => (
+              <tr key={i} className="border-b">
+                <td className="p-4 font-bold">{s.name}</td>
+                <td className="p-4 text-center text-green-600">{s.quiz}%</td>
+                <td className="p-4 text-center text-blue-600">{s.lessons}</td>
               </tr>
-            </thead>
-            <tbody>
-              {students.map((s, i) => (
-                <tr key={i} className="border-b hover:bg-blue-50/50 transition-colors">
-                  <td className="p-4 font-bold text-blue-900">{s.name}</td>
-                  <td className="p-4 text-center font-black text-green-600">{s.quiz}%</td>
-                  <td className="p-4 text-center font-bold text-indigo-600">{s.lesson}</td>
-                  <td className="p-4 text-center text-[10px] text-gray-400 font-mono">{s.email}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
