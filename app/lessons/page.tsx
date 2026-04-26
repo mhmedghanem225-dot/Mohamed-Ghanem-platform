@@ -7,12 +7,13 @@ function LessonsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   
-  // حل المشكلة: محاولة جلب الصف من الرابط، وإذا لم يوجد نجلب آخر صف محفوظ
   const [grade, setGrade] = useState("");
-  const [lessons, setLessons] = useState<any[]>([]);
+  const [units, setUnits] = useState<{[key: string]: any[]}>({});
+  const [openUnits, setOpenUnits] = useState<{[key: string]: boolean}>({});
   const [loading, setLoading] = useState(true);
   const [studentName, setStudentName] = useState("");
   const [points, setPoints] = useState(0);
+  const [notification, setNotification] = useState("");
 
   useEffect(() => {
     const savedSession = localStorage.getItem("ghanem_session");
@@ -21,17 +22,16 @@ function LessonsContent() {
     setStudentName(userData.name);
     setPoints(parseInt(localStorage.getItem("ghanem_points") || "0"));
 
-    // تحديد الصف الدراسي (من الرابط أو الذاكرة)
     const gradeFromURL = searchParams.get("grade");
     const lastSavedGrade = localStorage.getItem("last_grade");
     const currentGrade = gradeFromURL || lastSavedGrade || "";
     
     if (currentGrade) {
       setGrade(currentGrade);
-      localStorage.setItem("last_grade", currentGrade); // حفظ الصف للرجوع إليه لاحقاً
+      localStorage.setItem("last_grade", currentGrade);
       fetchLessons(currentGrade);
     } else {
-      setLoading(false); // لو مفيش صف خالص يوقف التحميل
+      setLoading(false);
     }
   }, [searchParams, router]);
 
@@ -41,9 +41,11 @@ function LessonsContent() {
       const res = await fetch(`https://docs.google.com/spreadsheets/d/e/2PACX-1vQ-ZJwP0z4SVM4XfAPevqPqsSvbSBRy18i_rbgfVNGYVHBZj10aHtdHqhMj8kKKkI0WHwWLDLFxXniO/pub?output=csv&t=${Date.now()}`);
       const data = await res.text();
       const rows = data.split("\n").map(row => row.split(","));
+      
       const filtered = rows.slice(1)
         .map(r => ({ 
           grade: r[0]?.trim(), 
+          unit: r[9]?.trim() || "General Lessons", // العمود العاشر J هو اسم الوحدة
           title: r[1]?.trim(), 
           video: r[2]?.trim(), 
           pdf: r[3]?.trim(), 
@@ -51,14 +53,41 @@ function LessonsContent() {
           keywords: r[6]?.trim() 
         }))
         .filter(i => i.grade === targetGrade);
-      setLessons(filtered);
+
+      // نظام التنبيهات عند إضافة درس جديد
+      const lastCount = parseInt(localStorage.getItem(`count_${targetGrade}`) || "0");
+      if (lastCount > 0 && filtered.length > lastCount) {
+        setNotification("🎉 New lesson added! Check it out.");
+        setTimeout(() => setNotification(""), 5000);
+      }
+      localStorage.setItem(`count_${targetGrade}`, filtered.length.toString());
+
+      // تجميع الدروس حسب الوحدة
+      const grouped = filtered.reduce((acc: any, item) => {
+        if (!acc[item.unit]) acc[item.unit] = [];
+        acc[item.unit].push(item);
+        return acc;
+      }, {});
+
+      setUnits(grouped);
       setLoading(false);
     } catch (e) { setLoading(false); }
   };
 
+  const toggleUnit = (unitName: string) => {
+    setOpenUnits(prev => ({ ...prev, [unitName]: !prev[unitName] }));
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 pb-28" dir="rtl">
-      {/* Header - نفس التصميم بدون أي تغيير */}
+      {/* Toast Notification */}
+      {notification && (
+        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-[100] bg-[#1D63ED] text-white px-6 py-3 rounded-2xl shadow-2xl font-bold text-xs animate-bounce">
+          {notification}
+        </div>
+      )}
+
+      {/* Header - المعتمد */}
       <div className="bg-[#1D63ED] pt-8 pb-16 px-6 rounded-b-[3rem] shadow-xl relative overflow-hidden text-right">
         <div className="flex justify-between items-center relative z-10 mb-4">
           <button onClick={() => router.push('/profile')} className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-lg border border-white/30 active:scale-90 transition-all">👤</button>
@@ -78,57 +107,73 @@ function LessonsContent() {
         </div>
       </div>
 
-      {/* Lessons List */}
+      {/* Units Accordion - نظام الوحدات المنسدلة */}
       <div className="max-w-md mx-auto px-4 mt-[-30px] relative z-20">
         {loading ? (
-          <div className="bg-white p-8 rounded-[2rem] shadow-xl text-center font-bold text-blue-600 animate-pulse text-sm">Loading lessons...</div>
+          <div className="bg-white p-8 rounded-[2rem] shadow-xl text-center font-bold text-blue-600 animate-pulse text-sm">Loading curriculum...</div>
         ) : (
           <div className="space-y-3">
-            {lessons.map((lesson, idx) => (
-              <div key={idx} className="bg-white p-5 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col gap-3 text-right">
-                <div className="flex items-center justify-between">
-                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-2xl">📺</div>
-                    <div>
-                      <h3 className="font-bold text-gray-800 text-base leading-tight mb-0.5">{lesson.title}</h3>
-                      <span className="text-[9px] font-bold text-gray-400">⏱️ {lesson.duration}</span>
-                    </div>
+            {Object.keys(units).map((unitName) => (
+              <div key={unitName} className="bg-white rounded-[1.8rem] shadow-sm border border-gray-100 overflow-hidden">
+                <button 
+                  onClick={() => toggleUnit(unitName)}
+                  className="w-full p-5 flex justify-between items-center bg-gray-50/50 active:bg-gray-100 transition-all"
+                >
+                  <span className={`text-sm text-gray-400 transition-transform duration-300 ${openUnits[unitName] ? 'rotate-180' : ''}`}>▼</span>
+                  <span className="font-black text-gray-700 text-sm">{unitName}</span>
+                </button>
+                
+                {openUnits[unitName] && (
+                  <div className="p-3 space-y-3 bg-white border-t border-gray-50 transition-all">
+                    {units[unitName].map((lesson, idx) => (
+                      <div key={idx} className="p-4 rounded-[1.5rem] border border-gray-50 bg-gray-50/30">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-xl shadow-inner">📺</div>
+                            <div>
+                              <h3 className="font-bold text-gray-800 text-xs">{lesson.title}</h3>
+                              <span className="text-[9px] font-bold text-gray-400">⏱️ {lesson.duration}</span>
+                            </div>
+                          </div>
+                          <a href={lesson.video} target="_blank" className="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center shadow-md active:scale-90 transition-transform text-xs">▶️</a>
+                        </div>
+                        <div className="flex gap-2">
+                          {lesson.keywords && (
+                            <button onClick={() => router.push(`/flashcards?title=${encodeURIComponent(lesson.title)}&grade=${encodeURIComponent(grade)}`)} className="flex-1 bg-indigo-600 text-white py-2 rounded-xl text-[10px] font-black active:scale-95">🧠 Challenge</button>
+                          )}
+                          {lesson.pdf && (
+                            <a href={lesson.pdf} target="_blank" className="flex-1 bg-white text-green-600 py-2 rounded-xl text-[10px] font-black border border-green-100 text-center active:scale-95">📄 PDF</a>
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  <a href={lesson.video} target="_blank" className="bg-blue-600 text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-transform text-sm">▶️</a>
-                </div>
-                <div className="flex gap-2 pt-2 border-t border-gray-50">
-                  {lesson.keywords && (
-                    <button onClick={() => router.push(`/flashcards?title=${encodeURIComponent(lesson.title)}&grade=${encodeURIComponent(grade)}`)} className="flex-1 bg-indigo-600 text-white py-2.5 rounded-xl text-center text-[10px] font-black active:scale-95 transition-all">🧠 Challenge</button>
-                  )}
-                  {lesson.pdf && (
-                    <a href={lesson.pdf} target="_blank" className="flex-1 bg-[#E8F5E9] text-[#2E7D32] py-2.5 rounded-xl text-center text-[10px] font-black border border-green-100 flex items-center justify-center active:scale-95">📄 Summary</a>
-                  )}
-                </div>
+                )}
               </div>
             ))}
           </div>
         )}
       </div>
 
-      {/* Navigation Bar - نفس الشكل الموحد المعتمد */}
+      {/* Navigation Bar - الموحد المعتمد */}
       <div className="fixed bottom-5 left-10 right-10 bg-white/95 backdrop-blur-md p-2 rounded-[2rem] shadow-2xl border border-gray-100 flex justify-around items-center z-50">
         <button onClick={() => router.push('/profile')} className="flex flex-col items-center gap-0.5 p-1 active:scale-75 transition-all">
           <span className="text-xl opacity-60">👤</span>
           <span className="text-[9px] font-black text-gray-400">Profile</span>
         </button>
-
         <button className="flex flex-col items-center gap-0.5 p-1 relative">
           <div className="bg-[#1D63ED] text-white w-12 h-12 flex items-center justify-center rounded-full shadow-lg -mt-8 border-[3px] border-gray-50 transition-all">
             <span className="text-xl">📖</span>
           </div>
           <span className="text-[9px] font-black text-[#1D63ED]">Lessons</span>
         </button>
-
         <button onClick={() => router.push('/leaderboard')} className="flex flex-col items-center gap-0.5 p-1 active:scale-75 transition-all">
           <span className="text-xl opacity-60">👑</span>
           <span className="text-[9px] font-black text-gray-400">Leaders</span>
         </button>
       </div>
+
+      <footer className="mt-8 text-center text-gray-300 text-[9px] font-bold pb-4">Ghanem Academy • 2026</footer>
     </div>
   );
 }
