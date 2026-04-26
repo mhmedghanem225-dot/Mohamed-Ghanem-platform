@@ -12,8 +12,10 @@ export default function AdminDashboard() {
     if (!savedSession) { router.replace("/"); return; }
     
     const userData = JSON.parse(savedSession);
-    // ⚠️ ضع إيميلك هنا بالضبط كما تسجل به دخول
-    if (userData.email !== "mhmedghanem225@gmail.com") { 
+    const myEmail = "mhmedghanem225@gmail.com"; // 👈 اكتب إيميلك هنا بدقة
+
+    if (userData.email.trim().toLowerCase() !== myEmail.trim().toLowerCase()) { 
+      console.log("Access Denied for:", userData.email);
       router.replace("/profile"); 
       return; 
     }
@@ -24,18 +26,17 @@ export default function AdminDashboard() {
     try {
       const res = await fetch(`https://docs.google.com/spreadsheets/d/e/2PACX-1vQ-ZJwP0z4SVM4XfAPevqPqsSvbSBRy18i_rbgfVNGYVHBZj10aHtdHqhMj8kKKkI0WHwWLDLFxXniO/pub?output=csv&t=${Date.now()}`);
       const data = await res.text();
-      const rows = data.split(/\r?\n/).slice(1);
+      const rows = data.split(/\r?\n/).filter(row => row.trim() !== "");
       
-      const parsedStudents = rows.map(row => {
+      const parsedStudents = rows.slice(1).map(row => {
         const columns = row.split(",");
         return {
-          name: columns[0],          // العمود A
-          grade: columns[3],         // العمود D
-          quizScore: columns[4] || "0",      // العمود E
-          completedCount: columns[5] || "0",  // العمود F
-          email: columns[6]          // العمود G (الإيميل للبحث)
+          name: columns[0] || "بدون اسم",
+          quizScore: columns[4] || "0",     // عمود E
+          completedCount: columns[5] || "0", // عمود F
+          email: columns[6] || "لا يوجد"    // عمود G
         };
-      }).filter(s => s.name);
+      });
 
       setStudents(parsedStudents);
       setLoading(false);
@@ -43,40 +44,29 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 pb-20" dir="rtl">
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-[#1D63ED] p-8 rounded-[2.5rem] mb-6 text-center shadow-lg">
-          <h1 className="text-2xl font-black text-white">لوحة تحكم المستر 👨‍🏫</h1>
-        </div>
-        
-        {loading ? (
-          <div className="bg-white p-12 rounded-[2rem] text-center font-bold text-blue-600 animate-pulse shadow-sm border border-gray-100">جاري تحميل البيانات...</div>
-        ) : (
-          <div className="bg-white rounded-[2rem] shadow-sm overflow-hidden border border-gray-100">
-            <div className="overflow-x-auto">
-              <table className="w-full text-right">
-                <thead className="bg-gray-50 text-gray-400 text-[9px] uppercase font-black">
-                  <tr>
-                    <th className="p-5">الطالب</th>
-                    <th className="p-5 text-center">الكويز (E)</th>
-                    <th className="p-5 text-center">الدروس (F)</th>
-                    <th className="p-5 text-center">الإيميل (G)</th>
-                  </tr>
-                </thead>
-                <tbody className="text-sm">
-                  {students.map((s, i) => (
-                    <tr key={i} className="border-t border-gray-50 hover:bg-blue-50/30 transition-all">
-                      <td className="p-5 font-black text-gray-800">{s.name}</td>
-                      <td className="p-5 text-center font-black text-green-600">{s.quizScore}%</td>
-                      <td className="p-5 text-center text-blue-600 font-bold">{s.completedCount}</td>
-                      <td className="p-5 text-center text-[10px] text-gray-400">{s.email}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
+    <div className="min-h-screen bg-gray-50 p-6" dir="rtl">
+      <h1 className="text-2xl font-black text-center mb-6 text-blue-900">لوحة تحكم المستر 👨‍🏫</h1>
+      <div className="max-w-4xl mx-auto bg-white rounded-3xl shadow-xl overflow-hidden">
+        <table className="w-full text-right">
+          <thead className="bg-blue-600 text-white">
+            <tr>
+              <th className="p-4">الطالب</th>
+              <th className="p-4">الكويز (E)</th>
+              <th className="p-4">الدروس (F)</th>
+              <th className="p-4">الإيميل (G)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {students.map((s, i) => (
+              <tr key={i} className="border-b">
+                <td className="p-4 font-bold">{s.name}</td>
+                <td className="p-4 text-green-600 font-bold">{s.quizScore}%</td>
+                <td className="p-4 text-blue-600">{s.completedCount}</td>
+                <td className="p-4 text-gray-400 text-xs">{s.email}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
