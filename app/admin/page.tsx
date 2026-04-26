@@ -12,8 +12,8 @@ export default function AdminDashboard() {
     if (!savedSession) { router.replace("/"); return; }
     
     const userData = JSON.parse(savedSession);
-    // تأكد أن هذا الإيميل هو إيميلك المسجل في الشيت
-    if (userData.email !== "mohamedghanem@gmail.com") { 
+    // ⚠️ ضع إيميلك هنا بالضبط كما تسجل به دخول
+    if (userData.email !== "mhmedghanem225@gmail.com") { 
       router.replace("/profile"); 
       return; 
     }
@@ -31,8 +31,9 @@ export default function AdminDashboard() {
         return {
           name: columns[0],          // العمود A
           grade: columns[3],         // العمود D
-          quizScore: columns[4] || "0",      // العمود E (بداية البيانات الجديدة)
-          completedCount: columns[5] || "0"  // العمود F
+          quizScore: columns[4] || "0",      // العمود E
+          completedCount: columns[5] || "0",  // العمود F
+          email: columns[6]          // العمود G (الإيميل للبحث)
         };
       }).filter(s => s.name);
 
@@ -46,11 +47,10 @@ export default function AdminDashboard() {
       <div className="max-w-4xl mx-auto">
         <div className="bg-[#1D63ED] p-8 rounded-[2.5rem] mb-6 text-center shadow-lg">
           <h1 className="text-2xl font-black text-white">لوحة تحكم المستر 👨‍🏫</h1>
-          <p className="text-blue-100 text-[10px] mt-2 uppercase font-bold tracking-widest">Ghanem Academy Monitoring</p>
         </div>
         
         {loading ? (
-          <div className="bg-white p-12 rounded-[2rem] text-center font-bold text-blue-600 animate-pulse shadow-sm border border-gray-100">جاري تحميل تقارير الطلاب...</div>
+          <div className="bg-white p-12 rounded-[2rem] text-center font-bold text-blue-600 animate-pulse shadow-sm border border-gray-100">جاري تحميل البيانات...</div>
         ) : (
           <div className="bg-white rounded-[2rem] shadow-sm overflow-hidden border border-gray-100">
             <div className="overflow-x-auto">
@@ -58,18 +58,18 @@ export default function AdminDashboard() {
                 <thead className="bg-gray-50 text-gray-400 text-[9px] uppercase font-black">
                   <tr>
                     <th className="p-5">الطالب</th>
-                    <th className="p-5">الصف</th>
                     <th className="p-5 text-center">الكويز (E)</th>
                     <th className="p-5 text-center">الدروس (F)</th>
+                    <th className="p-5 text-center">الإيميل (G)</th>
                   </tr>
                 </thead>
                 <tbody className="text-sm">
                   {students.map((s, i) => (
                     <tr key={i} className="border-t border-gray-50 hover:bg-blue-50/30 transition-all">
                       <td className="p-5 font-black text-gray-800">{s.name}</td>
-                      <td className="p-5 text-xs text-gray-500 font-bold">{s.grade}</td>
                       <td className="p-5 text-center font-black text-green-600">{s.quizScore}%</td>
                       <td className="p-5 text-center text-blue-600 font-bold">{s.completedCount}</td>
+                      <td className="p-5 text-center text-[10px] text-gray-400">{s.email}</td>
                     </tr>
                   ))}
                 </tbody>
