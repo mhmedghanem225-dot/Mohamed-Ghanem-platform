@@ -2,67 +2,64 @@
 import { useState } from "react";
 
 export default function ParentPage() {
-  const [emailInput, setEmailInput] = useState("");
+  const [input, setInput] = useState("");
   const [report, setReport] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
-  const checkProgress = async () => {
-    if(!emailInput) return;
+  const check = async () => {
+    if(!input) return;
     setLoading(true);
     try {
       const res = await fetch(`https://docs.google.com/spreadsheets/d/e/2PACX-1vQ-ZJwP0z4SVM4XfAPevqPqsSvbSBRy18i_rbgfVNGYVHBZj10aHtdHqhMj8kKKkI0WHwWLDLFxXniO/pub?output=csv&t=${Date.now()}`);
-      const data = await res.text();
-      const rows = data.split(/\r?\n/).map(r => r.split(","));
+      const text = await res.text();
+      const rows = text.split(/\r?\n/).map(row => row.split(","));
       
-      // البحث في العمود رقم 6 (الذي يمثل العمود G في الشيت)
-      const student = rows.find(r => r[6] && r[6].trim().toLowerCase() === emailInput.trim().toLowerCase());
+      // البحث في العمود رقم 6 (G) مع تنظيف المسافات وعلامات التنصيص
+      const found = rows.find(r => 
+        r[6] && r[6].replace(/"/g, "").trim().toLowerCase() === input.trim().toLowerCase()
+      );
 
-      if (student) {
+      if (found) {
         setReport({
-          name: student[0],
-          quizScore: student[4] || "0", // العمود E
-          completedCount: student[5] || "0" // العمود F
+          name: found[0].replace(/"/g, ""),
+          quiz: found[4] || "0",
+          lessons: found[5] || "0"
         });
       } else {
-        alert("لم يتم العثور على طالب بهذا الإيميل في العمود G. تأكد من كتابته بشكل صحيح.");
+        alert("لم يتم العثory على هذا الإيميل في سجلاتنا");
       }
-    } catch (e) { alert("حدث خطأ في الاتصال بالسيرفر"); }
+    } catch (e) { alert("حدث خطأ"); }
     setLoading(false);
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] p-6 text-right" dir="rtl">
-      <div className="max-w-md mx-auto mt-10">
-        <div className="bg-white rounded-[2.5rem] p-8 shadow-2xl border border-gray-100">
-          <h2 className="text-xl font-black text-gray-900 mb-6 text-center">متابعة الطالب 👨‍👩‍👦</h2>
-          <input 
-            type="text" 
-            placeholder="ادخل إيميل الطالب (مثل: ah@440)" 
-            className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-200 mb-4 text-center outline-none focus:ring-2 focus:ring-blue-500 font-bold"
-            onChange={(e) => setEmailInput(e.target.value)}
-          />
-          <button onClick={checkProgress} className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black shadow-lg">
-            {loading ? "جاري البحث..." : "عرض مستوى ابني"}
-          </button>
+    <div className="min-h-screen bg-blue-50 p-6 text-right font-sans" dir="rtl">
+      <div className="max-w-md mx-auto bg-white rounded-3xl p-8 shadow-lg">
+        <h2 className="text-xl font-black text-center mb-6">تقرير مستوى الطالب 📝</h2>
+        <input 
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="ادخل إيميل الطالب بدقة" 
+          className="w-full p-4 rounded-xl border mb-4 text-center font-bold"
+        />
+        <button onClick={check} className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold">
+          {loading ? "جاري البحث..." : "استلام التقرير"}
+        </button>
 
-          {report && (
-            <div className="mt-8 space-y-4 animate-in fade-in duration-500">
-              <div className="bg-blue-50 p-5 rounded-2xl text-center border border-blue-100">
-                <p className="text-lg font-black text-blue-900">{report.name}</p>
+        {report && (
+          <div className="mt-6 p-6 bg-gray-50 rounded-2xl border border-dashed border-blue-200">
+            <p className="text-center font-black text-blue-800 text-lg mb-4">{report.name}</p>
+            <div className="flex justify-around">
+              <div className="text-center">
+                <p className="text-xs text-gray-400">الكويز</p>
+                <p className="text-xl font-black text-green-600">{report.quiz}%</p>
               </div>
-              <div className="grid grid-cols-2 gap-4 text-center">
-                <div className="bg-green-50 p-4 rounded-2xl">
-                  <p className="text-xl font-black text-green-700">{report.quizScore}%</p>
-                  <p className="text-[10px] text-green-400 font-bold uppercase">الكويز</p>
-                </div>
-                <div className="bg-indigo-50 p-4 rounded-2xl">
-                  <p className="text-xl font-black text-indigo-900">{report.completedCount}</p>
-                  <p className="text-[10px] text-indigo-400 font-bold uppercase">الدروس</p>
-                </div>
+              <div className="text-center">
+                <p className="text-xs text-gray-400">الدروس</p>
+                <p className="text-xl font-black text-blue-600">{report.lessons}</p>
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
