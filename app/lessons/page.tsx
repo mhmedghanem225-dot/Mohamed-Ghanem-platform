@@ -40,29 +40,25 @@ function LessonsContent() {
       const res = await fetch(`https://docs.google.com/spreadsheets/d/e/2PACX-1vQ-ZJwP0z4SVM4XfAPevqPqsSvbSBRy18i_rbgfVNGYVHBZj10aHtdHqhMj8kKKkI0WHwWLDLFxXniO/pub?output=csv&t=${Date.now()}`);
       const data = await res.text();
       
-      // حل المشكلة: تقسيم السطور مع مراعاة النصوص التي تحتوي على فواصل بالداخل
-      const rows = data.split(/\r?\n/).map(row => {
-        const matches = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
-        return matches ? matches.map(m => m.replace(/^"|"$/g, '')) : row.split(",");
-      });
+      // تقسيم الأسطر بشكل بسيط ومضمون
+      const rows = data.split(/\r?\n/).filter(line => line.trim() !== "");
       
-      const filtered = rows.slice(1)
-        .map(r => {
-          // السطر المسؤول عن جلب اسم الوحدة بدقة
-          // r[9] هو العمود J (العاشر)
-          const unitName = r[9]?.trim() || "General Lessons";
+      const filtered = rows.slice(1).map(row => {
+        const r = row.split(",");
+        // ذكاء اصطناعي بسيط: الوحدة دايماً هي آخر عمود (العمود J) 
+        // حتى لو الكلمات في النص زادت الفواصل، الوحدة بتفضل في الآخر
+        const unitName = r[r.length - 1]?.replace(/"/g, '').trim() || "General Lessons";
 
-          return { 
-            grade: r[0]?.trim(), 
-            title: r[1]?.trim(), 
-            video: r[2]?.trim(), 
-            pdf: r[3]?.trim(), 
-            duration: r[4]?.trim(),
-            keywords: r[6]?.trim(),
-            unit: unitName
-          };
-        })
-        .filter(i => i.grade === targetGrade);
+        return { 
+          grade: r[0]?.trim(), 
+          title: r[1]?.trim(), 
+          video: r[2]?.trim(), 
+          pdf: r[3]?.trim(), 
+          duration: r[4]?.trim(),
+          keywords: r[6]?.trim(),
+          unit: unitName
+        };
+      }).filter(i => i.grade === targetGrade);
 
       const grouped = filtered.reduce((acc: any, item) => {
         if (!acc[item.unit]) acc[item.unit] = [];
@@ -81,7 +77,7 @@ function LessonsContent() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-32" dir="rtl">
-      {/* Header - التصميم كما هو تماماً */}
+      {/* Header - No UI changes */}
       <div className="bg-[#1D63ED] pt-8 pb-16 px-6 rounded-b-[3rem] shadow-xl relative overflow-hidden text-right">
         <div className="flex justify-between items-center relative z-10 mb-4">
           <button onClick={() => router.push('/profile')} className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-lg border border-white/30 active:scale-90 transition-all">👤</button>
@@ -109,20 +105,16 @@ function LessonsContent() {
           <div className="space-y-3">
             {Object.keys(units).map((unitName) => (
               <div key={unitName} className="bg-white rounded-[1.8rem] shadow-sm border border-gray-100 overflow-hidden">
-                <button 
-                  onClick={() => toggleUnit(unitName)}
-                  className="w-full p-5 flex justify-between items-center bg-gray-50/50 active:bg-gray-100 transition-all"
-                >
+                <button onClick={() => toggleUnit(unitName)} className="w-full p-5 flex justify-between items-center bg-gray-50/50 active:bg-gray-100 transition-all">
                   <span className={`text-sm text-gray-400 transition-transform duration-300 ${openUnits[unitName] ? 'rotate-180' : ''}`}>▼</span>
                   <span className="font-black text-gray-700 text-sm">{unitName}</span>
                 </button>
-                
                 {openUnits[unitName] && (
                   <div className="p-3 space-y-3 bg-white border-t border-gray-50">
                     {units[unitName].map((lesson, idx) => (
                       <div key={idx} className="p-4 rounded-[1.5rem] border border-gray-50 bg-gray-50/30 text-right">
                         <div className="flex items-center justify-between mb-3">
-                           <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-xl shadow-inner">📺</div>
                             <div className="text-right">
                               <h3 className="font-bold text-gray-800 text-xs">{lesson.title}</h3>
