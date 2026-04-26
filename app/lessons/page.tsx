@@ -21,18 +21,17 @@ function LessonsContent() {
     const userData = JSON.parse(savedSession);
     setStudentName(userData.name);
 
-    // تحميل الدروس المكتملة بناءً على الإيميل لضمان الخصوصية
+    // جلب الدروس المكتملة بناءً على الإيميل
     const savedProgress = localStorage.getItem(`progress_${userData.email}`);
     if (savedProgress) setCompletedLessons(JSON.parse(savedProgress));
 
     const gradeFromURL = searchParams.get("grade");
-    const lastSavedGrade = localStorage.getItem("last_grade");
-    const currentGrade = gradeFromURL || lastSavedGrade || "";
+    const currentGrade = gradeFromURL || localStorage.getItem("last_grade") || "";
     
     if (currentGrade) {
       setGrade(currentGrade);
       localStorage.setItem("last_grade", currentGrade);
-      fetchLessons(currentGrade, userData.email); // نمرر الإيميل لجلب النقاط
+      fetchLessons(currentGrade, userData.email);
     } else {
       setLoading(false);
     }
@@ -47,24 +46,17 @@ function LessonsContent() {
       const rows = data.split(/\r?\n/).filter(line => line.trim() !== "");
       const allRows = rows.map(r => r.split(","));
 
-      // الحل الجذري: البحث عن نقاط الطالب الحالي بالإيميل داخل الشيت
+      // تحديث النقاط من الشيت مباشرة بالإيميل
       const currentUser = allRows.find(r => r[4]?.trim().toLowerCase() === email.toLowerCase());
-      if (currentUser) {
-        setPoints(parseInt(currentUser[8]?.trim() || "0"));
-      }
+      if (currentUser) setPoints(parseInt(currentUser[8]?.trim() || "0"));
 
       const filtered = rows.slice(1).map(row => {
         const r = row.split(",");
+        // السطر السحري اللي بيجيب الوحدات صح
         const unitName = r[r.length - 1]?.replace(/"/g, '').trim() || "General Lessons";
-
         return { 
-          grade: r[0]?.trim(), 
-          title: r[1]?.trim(), 
-          video: r[2]?.trim(), 
-          pdf: r[3]?.trim(), 
-          duration: r[4]?.trim(),
-          keywords: r[6]?.trim(),
-          unit: unitName
+          grade: r[0]?.trim(), title: r[1]?.trim(), video: r[2]?.trim(), 
+          pdf: r[3]?.trim(), duration: r[4]?.trim(), keywords: r[6]?.trim(), unit: unitName
         };
       }).filter(i => i.grade === targetGrade);
 
@@ -79,15 +71,10 @@ function LessonsContent() {
     } catch (e) { setLoading(false); }
   };
 
-  const toggleUnit = (unitName: string) => {
-    setOpenUnits(prev => ({ ...prev, [unitName]: !prev[unitName] }));
-  };
-
   const markAsDone = (title: string) => {
     const savedSession = localStorage.getItem("ghanem_session");
     if (!savedSession) return;
     const userData = JSON.parse(savedSession);
-
     if (!completedLessons.includes(title)) {
       const newProgress = [...completedLessons, title];
       setCompletedLessons(newProgress);
@@ -97,7 +84,6 @@ function LessonsContent() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-32" dir="rtl">
-      {/* الـ Header وباقي الـ UI كما هو تماماً في كودك الأصلي */}
       <div className="bg-[#1D63ED] pt-8 pb-16 px-6 rounded-b-[3rem] shadow-xl relative overflow-hidden text-right">
         <div className="flex justify-between items-center relative z-10 mb-4">
           <button onClick={() => router.push('/profile')} className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-lg border border-white/30 active:scale-90 transition-all">👤</button>
@@ -124,7 +110,7 @@ function LessonsContent() {
           <div className="space-y-3">
             {Object.keys(units).map((unitName) => (
               <div key={unitName} className="bg-white rounded-[1.8rem] shadow-sm border border-gray-100 overflow-hidden">
-                <button onClick={() => toggleUnit(unitName)} className="w-full p-5 flex justify-between items-center bg-gray-50/50 active:bg-gray-100 transition-all">
+                <button onClick={() => setOpenUnits(p => ({...p, [unitName]: !p[unitName]}))} className="w-full p-5 flex justify-between items-center bg-gray-50/50 active:bg-gray-100 transition-all">
                   <span className={`text-sm text-gray-400 transition-transform duration-300 ${openUnits[unitName] ? 'rotate-180' : ''}`}>▼</span>
                   <span className="font-black text-gray-700 text-sm">{unitName}</span>
                 </button>
@@ -163,22 +149,10 @@ function LessonsContent() {
         )}
       </div>
 
-      {/* Navigation Bar كما هو */}
       <div className="fixed bottom-5 left-10 right-10 bg-white/95 backdrop-blur-md p-2 rounded-[2rem] shadow-2xl border border-gray-100 flex justify-around items-center z-50">
-        <button onClick={() => router.push('/profile')} className="flex flex-col items-center gap-0.5 p-1 active:scale-75 transition-all">
-          <span className="text-xl opacity-60">👤</span>
-          <span className="text-[9px] font-black text-gray-400">Profile</span>
-        </button>
-        <button className="flex flex-col items-center gap-0.5 p-1 relative">
-          <div className="bg-[#1D63ED] text-white w-12 h-12 flex items-center justify-center rounded-full shadow-lg -mt-8 border-[3px] border-gray-50 transition-all">
-            <span className="text-xl">📖</span>
-          </div>
-          <span className="text-[9px] font-black text-[#1D63ED]">Lessons</span>
-        </button>
-        <button onClick={() => router.push('/leaderboard')} className="flex flex-col items-center gap-0.5 p-1 active:scale-75 transition-all">
-          <span className="text-xl opacity-60">👑</span>
-          <span className="text-[9px] font-black text-gray-400">Leaders</span>
-        </button>
+        <button onClick={() => router.push('/profile')} className="flex flex-col items-center gap-0.5 p-1 active:scale-75 transition-all"><span className="text-xl opacity-60">👤</span><span className="text-[9px] font-black text-gray-400">Profile</span></button>
+        <button className="flex flex-col items-center gap-0.5 p-1 relative"><div className="bg-[#1D63ED] text-white w-12 h-12 flex items-center justify-center rounded-full shadow-lg -mt-8 border-[3px] border-gray-50 transition-all"><span className="text-xl">📖</span></div><span className="text-[9px] font-black text-[#1D63ED]">Lessons</span></button>
+        <button onClick={() => router.push('/leaderboard')} className="flex flex-col items-center gap-0.5 p-1 active:scale-75 transition-all"><span className="text-xl opacity-60">👑</span><span className="text-[9px] font-black text-gray-400">Leaders</span></button>
       </div>
     </div>
   );
