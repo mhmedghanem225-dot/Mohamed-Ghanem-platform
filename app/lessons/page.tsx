@@ -2,7 +2,7 @@
 import { useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { Suspense, useEffect, useState } from "react";
-
+ 
 function LessonsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -13,20 +13,22 @@ function LessonsContent() {
   const [loading, setLoading] = useState(true);
   const [studentName, setStudentName] = useState("");
   const [points, setPoints] = useState(0);
+  // إضافة حالة للدروس المكتملة
   const [completedLessons, setCompletedLessons] = useState<string[]>([]);
-
+ 
   useEffect(() => {
     const savedSession = localStorage.getItem("ghanem_session");
     if (!savedSession) { router.replace("/"); return; }
     const userData = JSON.parse(savedSession);
     setStudentName(userData.name);
 
-    // جلب الدروس المكتملة بناءً على الإيميل
+    // تحميل الدروس المكتملة بناءً على الإيميل لضمان عدم تداخل الطلاب
     const savedProgress = localStorage.getItem(`progress_${userData.email}`);
     if (savedProgress) setCompletedLessons(JSON.parse(savedProgress));
-
+ 
     const gradeFromURL = searchParams.get("grade");
-    const currentGrade = gradeFromURL || localStorage.getItem("last_grade") || "";
+    const lastSavedGrade = localStorage.getItem("last_grade");
+    const currentGrade = gradeFromURL || lastSavedGrade || "";
     
     if (currentGrade) {
       setGrade(currentGrade);
@@ -36,7 +38,7 @@ function LessonsContent() {
       setLoading(false);
     }
   }, [searchParams, router]);
-
+ 
   const fetchLessons = async (targetGrade: string, email: string) => {
     try {
       setLoading(true);
@@ -46,31 +48,41 @@ function LessonsContent() {
       const rows = data.split(/\r?\n/).filter(line => line.trim() !== "");
       const allRows = rows.map(r => r.split(","));
 
-      // تحديث النقاط من الشيت مباشرة بالإيميل
+      // جلب النقاط الحقيقية للطالب من الشيت مباشرة
       const currentUser = allRows.find(r => r[4]?.trim().toLowerCase() === email.toLowerCase());
       if (currentUser) setPoints(parseInt(currentUser[8]?.trim() || "0"));
-
+      
       const filtered = rows.slice(1).map(row => {
         const r = row.split(",");
-        // السطر السحري اللي بيجيب الوحدات صح
         const unitName = r[r.length - 1]?.replace(/"/g, '').trim() || "General Lessons";
+ 
         return { 
-          grade: r[0]?.trim(), title: r[1]?.trim(), video: r[2]?.trim(), 
-          pdf: r[3]?.trim(), duration: r[4]?.trim(), keywords: r[6]?.trim(), unit: unitName
+          grade: r[0]?.trim(), 
+          title: r[1]?.trim(), 
+          video: r[2]?.trim(), 
+          pdf: r[3]?.trim(), 
+          duration: r[4]?.trim(),
+          keywords: r[6]?.trim(),
+          unit: unitName
         };
       }).filter(i => i.grade === targetGrade);
-
+ 
       const grouped = filtered.reduce((acc: any, item) => {
         if (!acc[item.unit]) acc[item.unit] = [];
         acc[item.unit].push(item);
         return acc;
       }, {});
-
+ 
       setUnits(grouped);
       setLoading(false);
     } catch (e) { setLoading(false); }
   };
+ 
+  const toggleUnit = (unitName: string) => {
+    setOpenUnits(prev => ({ ...prev, [unitName]: !prev[unitName] }));
+  };
 
+  // وظيفة تعليم الدرس كمكتمل
   const markAsDone = (title: string) => {
     const savedSession = localStorage.getItem("ghanem_session");
     if (!savedSession) return;
@@ -81,7 +93,7 @@ function LessonsContent() {
       localStorage.setItem(`progress_${userData.email}`, JSON.stringify(newProgress));
     }
   };
-
+ 
   return (
     <div className="min-h-screen bg-gray-50 pb-32" dir="rtl">
       <div className="bg-[#1D63ED] pt-8 pb-16 px-6 rounded-b-[3rem] shadow-xl relative overflow-hidden text-right">
@@ -102,7 +114,7 @@ function LessonsContent() {
           </div>
         </div>
       </div>
-
+ 
       <div className="max-w-md mx-auto px-4 mt-[-30px] relative z-20">
         {loading ? (
           <div className="bg-white p-8 rounded-[2rem] shadow-xl text-center font-bold text-blue-600 animate-pulse text-sm">Loading curriculum...</div>
@@ -110,7 +122,7 @@ function LessonsContent() {
           <div className="space-y-3">
             {Object.keys(units).map((unitName) => (
               <div key={unitName} className="bg-white rounded-[1.8rem] shadow-sm border border-gray-100 overflow-hidden">
-                <button onClick={() => setOpenUnits(p => ({...p, [unitName]: !p[unitName]}))} className="w-full p-5 flex justify-between items-center bg-gray-50/50 active:bg-gray-100 transition-all">
+                <button onClick={() => toggleUnit(unitName)} className="w-full p-5 flex justify-between items-center bg-gray-50/50 active:bg-gray-100 transition-all">
                   <span className={`text-sm text-gray-400 transition-transform duration-300 ${openUnits[unitName] ? 'rotate-180' : ''}`}>▼</span>
                   <span className="font-black text-gray-700 text-sm">{unitName}</span>
                 </button>
@@ -118,6 +130,7 @@ function LessonsContent() {
                   <div className="p-3 space-y-3 bg-white border-t border-gray-50">
                     {units[unitName].map((lesson, idx) => (
                       <div key={idx} className="p-4 rounded-[1.5rem] border border-gray-50 bg-gray-50/30 text-right relative overflow-hidden">
+                        {/* علامة الصح */}
                         {completedLessons.includes(lesson.title) && (
                           <div className="absolute top-2 left-2 bg-green-500 text-white text-[8px] px-2 py-0.5 rounded-full font-bold shadow-sm">DONE ✅</div>
                         )}
@@ -148,7 +161,7 @@ function LessonsContent() {
           </div>
         )}
       </div>
-
+ 
       <div className="fixed bottom-5 left-10 right-10 bg-white/95 backdrop-blur-md p-2 rounded-[2rem] shadow-2xl border border-gray-100 flex justify-around items-center z-50">
         <button onClick={() => router.push('/profile')} className="flex flex-col items-center gap-0.5 p-1 active:scale-75 transition-all"><span className="text-xl opacity-60">👤</span><span className="text-[9px] font-black text-gray-400">Profile</span></button>
         <button className="flex flex-col items-center gap-0.5 p-1 relative"><div className="bg-[#1D63ED] text-white w-12 h-12 flex items-center justify-center rounded-full shadow-lg -mt-8 border-[3px] border-gray-50 transition-all"><span className="text-xl">📖</span></div><span className="text-[9px] font-black text-[#1D63ED]">Lessons</span></button>

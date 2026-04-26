@@ -1,18 +1,19 @@
 "use client";
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-
+import { useEffect, useState } from "react";
+ 
 export default function ProfilePage() {
   const router = useRouter();
-  const [user, setUser] = useState<any>(null);
+  const [name, setName] = useState("");
   const [points, setPoints] = useState(0);
-
+ 
   useEffect(() => {
     const savedSession = localStorage.getItem("ghanem_session");
     if (!savedSession) { router.replace("/"); return; }
     const userData = JSON.parse(savedSession);
-    setUser(userData);
+    setName(userData.name);
 
+    // جلب النقاط المحدثة من الشيت بالإيميل بدلاً من localStorage
     const fetchPoints = async () => {
       try {
         const res = await fetch(`https://docs.google.com/spreadsheets/d/e/2PACX-1vQ-ZJwP0z4SVM4XfAPevqPqsSvbSBRy18i_rbgfVNGYVHBZj10aHtdHqhMj8kKKkI0WHwWLDLFxXniO/pub?output=csv&t=${Date.now()}`);
@@ -24,48 +25,43 @@ export default function ProfilePage() {
     };
     fetchPoints();
   }, [router]);
-
-  const handleLogout = () => {
-    localStorage.removeItem("ghanem_session");
-    router.replace("/");
-  };
-
-  if (!user) return null;
-
+ 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center p-6 pb-32" dir="rtl">
-      <div className="w-full max-w-md bg-white rounded-[2.5rem] shadow-xl overflow-hidden border border-gray-100">
-        <div className="bg-[#1D63ED] p-10 text-center">
-          <div className="w-24 h-24 bg-white rounded-full mx-auto mb-4 flex items-center justify-center text-4xl shadow-lg">👤</div>
-          <h2 className="text-white text-xl font-black">{user.name}</h2>
-          <p className="text-blue-100 text-xs font-bold">{user.email}</p>
+    <div className="min-h-screen bg-gray-50 p-6 text-right pb-32" dir="rtl">
+      <h1 className="text-2xl font-black text-gray-900 mb-6 text-center">My Profile 👤</h1>
+      
+      <div className="max-w-md mx-auto">
+        <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-100 text-center mb-6">
+          <div className="w-20 h-20 bg-blue-100 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl shadow-inner">👤</div>
+          <h2 className="text-lg font-black text-gray-800">{name}</h2>
+          <p className="text-blue-600 font-bold text-sm">Ghanem Academy Hero</p>
         </div>
-
-        <div className="p-8 space-y-4">
-          {/* كارت النقاط */}
-          <div className="flex justify-between items-center p-6 bg-blue-50 rounded-3xl border border-blue-100 shadow-sm">
-            <span className="font-black text-blue-900">Total Points</span>
-            <span className="text-3xl font-black text-[#1D63ED]">{points} <span className="text-sm">pt</span></span>
+ 
+        <div className="grid grid-cols-2 gap-4 mb-6">
+          <div className="bg-white p-5 rounded-[2rem] shadow-sm border border-gray-100 text-center">
+            <p className="text-xl mb-1">🏆</p>
+            <p className="text-lg font-black text-gray-800">{points}</p>
+            <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">Total Points</p>
           </div>
-
-          {/* أيقونة الشهادة - رجعت كما كانت */}
-          <button className="w-full flex items-center justify-between p-6 bg-yellow-50 rounded-3xl border border-yellow-100 shadow-sm active:scale-95 transition-all">
-            <div className="flex items-center gap-4">
-              <span className="text-3xl">📜</span>
-              <div className="text-right">
-                <p className="font-black text-yellow-900 text-sm">Certificates</p>
-                <p className="text-[10px] text-yellow-700 font-bold">Show your achievements</p>
-              </div>
-            </div>
-            <span className="text-yellow-400">◀</span>
+          <button onClick={() => router.push('/achievements')} className="bg-white p-5 rounded-[2rem] shadow-sm border border-gray-100 text-center active:scale-95 transition-all">
+            <p className="text-xl mb-1">🎓</p>
+            <p className="text-sm font-black text-gray-800">Certificates</p>
           </button>
-
-          <button onClick={handleLogout} className="w-full py-4 bg-red-50 text-red-600 rounded-2xl font-black border border-red-100 active:scale-95 transition-all mt-4">Sign Out</button>
         </div>
+ 
+        <button 
+          onClick={() => { localStorage.removeItem("ghanem_session"); router.replace("/"); }}
+          className="w-full bg-red-50 text-red-500 py-4 rounded-2xl font-black shadow-sm active:scale-95 transition-all flex items-center justify-center gap-2 text-sm"
+        >
+          Logout 🚪
+        </button>
       </div>
-
+ 
       <div className="fixed bottom-5 left-10 right-10 bg-white/95 backdrop-blur-md p-2 rounded-[2rem] shadow-2xl border border-gray-100 flex justify-around items-center z-50">
-        <button className="flex flex-col items-center gap-0.5 p-1 relative"><div className="bg-[#1D63ED] text-white w-12 h-12 flex items-center justify-center rounded-full shadow-lg -mt-8 border-[3px] border-gray-50 transition-all"><span className="text-xl">👤</span></div><span className="text-[9px] font-black text-[#1D63ED]">Profile</span></button>
+        <button className="flex flex-col items-center gap-0.5 p-1">
+          <div className="bg-[#1D63ED] text-white w-12 h-12 flex items-center justify-center rounded-full shadow-lg -mt-8 border-[3px] border-gray-50 transition-all"><span className="text-xl">👤</span></div>
+          <span className="text-[9px] font-black text-[#1D63ED]">Profile</span>
+        </button>
         <button onClick={() => router.push('/lessons')} className="flex flex-col items-center gap-0.5 p-1 active:scale-75 transition-all"><span className="text-xl opacity-60">📖</span><span className="text-[9px] font-black text-gray-400">Lessons</span></button>
         <button onClick={() => router.push('/leaderboard')} className="flex flex-col items-center gap-0.5 p-1 active:scale-75 transition-all"><span className="text-xl opacity-60">👑</span><span className="text-[9px] font-black text-gray-400">Leaders</span></button>
       </div>
