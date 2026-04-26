@@ -39,16 +39,18 @@ function LessonsContent() {
       setLoading(true);
       const res = await fetch(`https://docs.google.com/spreadsheets/d/e/2PACX-1vQ-ZJwP0z4SVM4XfAPevqPqsSvbSBRy18i_rbgfVNGYVHBZj10aHtdHqhMj8kKKkI0WHwWLDLFxXniO/pub?output=csv&t=${Date.now()}`);
       const data = await res.text();
-      const rows = data.split("\n").map(row => row.split(","));
+      
+      // حل المشكلة: تقسيم السطور مع مراعاة النصوص التي تحتوي على فواصل بالداخل
+      const rows = data.split(/\r?\n/).map(row => {
+        const matches = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
+        return matches ? matches.map(m => m.replace(/^"|"$/g, '')) : row.split(",");
+      });
       
       const filtered = rows.slice(1)
         .map(r => {
-          // جلب اسم الوحدة بدقة (التأكد من العمود J أو I)
-          let unitName = r[9]?.trim(); // العمود العاشر J
-          if (!unitName || unitName === "" || unitName.includes(" ")) {
-             // محاولة إضافية لو العمود العاشر فاضي أو فيه قيم مشبوهة
-             unitName = r[9]?.trim() || "General Lessons";
-          }
+          // السطر المسؤول عن جلب اسم الوحدة بدقة
+          // r[9] هو العمود J (العاشر)
+          const unitName = r[9]?.trim() || "General Lessons";
 
           return { 
             grade: r[0]?.trim(), 
@@ -79,7 +81,7 @@ function LessonsContent() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-32" dir="rtl">
-      {/* Header - UI Fixed */}
+      {/* Header - التصميم كما هو تماماً */}
       <div className="bg-[#1D63ED] pt-8 pb-16 px-6 rounded-b-[3rem] shadow-xl relative overflow-hidden text-right">
         <div className="flex justify-between items-center relative z-10 mb-4">
           <button onClick={() => router.push('/profile')} className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-lg border border-white/30 active:scale-90 transition-all">👤</button>
@@ -147,7 +149,7 @@ function LessonsContent() {
         )}
       </div>
 
-      {/* Navigation Bar - Compact Design */}
+      {/* Navigation Bar */}
       <div className="fixed bottom-5 left-10 right-10 bg-white/95 backdrop-blur-md p-2 rounded-[2rem] shadow-2xl border border-gray-100 flex justify-around items-center z-50">
         <button onClick={() => router.push('/profile')} className="flex flex-col items-center gap-0.5 p-1 active:scale-75 transition-all">
           <span className="text-xl opacity-60">👤</span>
