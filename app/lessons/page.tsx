@@ -13,7 +13,6 @@ function LessonsContent() {
   const [loading, setLoading] = useState(true);
   const [studentName, setStudentName] = useState("");
   const [points, setPoints] = useState(0);
-  const [notification, setNotification] = useState("");
 
   useEffect(() => {
     const savedSession = localStorage.getItem("ghanem_session");
@@ -45,24 +44,16 @@ function LessonsContent() {
       const filtered = rows.slice(1)
         .map(r => ({ 
           grade: r[0]?.trim(), 
-          unit: r[9]?.trim() || "General Lessons", // العمود العاشر J هو اسم الوحدة
           title: r[1]?.trim(), 
           video: r[2]?.trim(), 
           pdf: r[3]?.trim(), 
           duration: r[4]?.trim(),
-          keywords: r[6]?.trim() 
+          keywords: r[6]?.trim(),
+          // التعديل هنا: التأكد من قراءة العمود العاشر (J) لاسم الوحدة
+          unit: r[9]?.trim() || "General Lessons" 
         }))
         .filter(i => i.grade === targetGrade);
 
-      // نظام التنبيهات عند إضافة درس جديد
-      const lastCount = parseInt(localStorage.getItem(`count_${targetGrade}`) || "0");
-      if (lastCount > 0 && filtered.length > lastCount) {
-        setNotification("🎉 New lesson added! Check it out.");
-        setTimeout(() => setNotification(""), 5000);
-      }
-      localStorage.setItem(`count_${targetGrade}`, filtered.length.toString());
-
-      // تجميع الدروس حسب الوحدة
       const grouped = filtered.reduce((acc: any, item) => {
         if (!acc[item.unit]) acc[item.unit] = [];
         acc[item.unit].push(item);
@@ -79,15 +70,8 @@ function LessonsContent() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-28" dir="rtl">
-      {/* Toast Notification */}
-      {notification && (
-        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-[100] bg-[#1D63ED] text-white px-6 py-3 rounded-2xl shadow-2xl font-bold text-xs animate-bounce">
-          {notification}
-        </div>
-      )}
-
-      {/* Header - المعتمد */}
+    <div className="min-h-screen bg-gray-50 pb-32" dir="rtl">
+      {/* Header - Fixed UI */}
       <div className="bg-[#1D63ED] pt-8 pb-16 px-6 rounded-b-[3rem] shadow-xl relative overflow-hidden text-right">
         <div className="flex justify-between items-center relative z-10 mb-4">
           <button onClick={() => router.push('/profile')} className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-lg border border-white/30 active:scale-90 transition-all">👤</button>
@@ -97,8 +81,8 @@ function LessonsContent() {
         </div>
         <div className="relative z-10 text-white flex justify-between items-end">
           <div>
-            <p className="text-blue-100 font-bold text-xs mb-1">Welcome, {studentName} 👋</p>
-            <h1 className="text-2xl font-black">{grade}</h1>
+            <p className="text-blue-100 font-bold text-xs mb-1 text-right">Welcome, {studentName} 👋</p>
+            <h1 className="text-2xl font-black text-right">{grade}</h1>
           </div>
           <div className="bg-white/20 backdrop-blur-md px-3 py-2 rounded-xl border border-white/30 text-center min-w-[70px]">
             <p className="text-[9px] font-bold text-blue-50">Points</p>
@@ -107,7 +91,7 @@ function LessonsContent() {
         </div>
       </div>
 
-      {/* Units Accordion - نظام الوحدات المنسدلة */}
+      {/* Units List */}
       <div className="max-w-md mx-auto px-4 mt-[-30px] relative z-20">
         {loading ? (
           <div className="bg-white p-8 rounded-[2rem] shadow-xl text-center font-bold text-blue-600 animate-pulse text-sm">Loading curriculum...</div>
@@ -124,13 +108,13 @@ function LessonsContent() {
                 </button>
                 
                 {openUnits[unitName] && (
-                  <div className="p-3 space-y-3 bg-white border-t border-gray-50 transition-all">
+                  <div className="p-3 space-y-3 bg-white border-t border-gray-50">
                     {units[unitName].map((lesson, idx) => (
-                      <div key={idx} className="p-4 rounded-[1.5rem] border border-gray-50 bg-gray-50/30">
+                      <div key={idx} className="p-4 rounded-[1.5rem] border border-gray-50 bg-gray-50/30 text-right">
                         <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-3">
+                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-xl shadow-inner">📺</div>
-                            <div>
+                            <div className="text-right">
                               <h3 className="font-bold text-gray-800 text-xs">{lesson.title}</h3>
                               <span className="text-[9px] font-bold text-gray-400">⏱️ {lesson.duration}</span>
                             </div>
@@ -155,7 +139,7 @@ function LessonsContent() {
         )}
       </div>
 
-      {/* Navigation Bar - الموحد المعتمد */}
+      {/* Navigation Bar - Fixed UI */}
       <div className="fixed bottom-5 left-10 right-10 bg-white/95 backdrop-blur-md p-2 rounded-[2rem] shadow-2xl border border-gray-100 flex justify-around items-center z-50">
         <button onClick={() => router.push('/profile')} className="flex flex-col items-center gap-0.5 p-1 active:scale-75 transition-all">
           <span className="text-xl opacity-60">👤</span>
@@ -172,8 +156,6 @@ function LessonsContent() {
           <span className="text-[9px] font-black text-gray-400">Leaders</span>
         </button>
       </div>
-
-      <footer className="mt-8 text-center text-gray-300 text-[9px] font-bold pb-4">Ghanem Academy • 2026</footer>
     </div>
   );
 }
