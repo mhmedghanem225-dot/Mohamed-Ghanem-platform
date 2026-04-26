@@ -42,16 +42,24 @@ function LessonsContent() {
       const rows = data.split("\n").map(row => row.split(","));
       
       const filtered = rows.slice(1)
-        .map(r => ({ 
-          grade: r[0]?.trim(), 
-          title: r[1]?.trim(), 
-          video: r[2]?.trim(), 
-          pdf: r[3]?.trim(), 
-          duration: r[4]?.trim(),
-          keywords: r[6]?.trim(),
-          // التعديل هنا: التأكد من قراءة العمود العاشر (J) لاسم الوحدة
-          unit: r[9]?.trim() || "General Lessons" 
-        }))
+        .map(r => {
+          // جلب اسم الوحدة بدقة (التأكد من العمود J أو I)
+          let unitName = r[9]?.trim(); // العمود العاشر J
+          if (!unitName || unitName === "" || unitName.includes(" ")) {
+             // محاولة إضافية لو العمود العاشر فاضي أو فيه قيم مشبوهة
+             unitName = r[9]?.trim() || "General Lessons";
+          }
+
+          return { 
+            grade: r[0]?.trim(), 
+            title: r[1]?.trim(), 
+            video: r[2]?.trim(), 
+            pdf: r[3]?.trim(), 
+            duration: r[4]?.trim(),
+            keywords: r[6]?.trim(),
+            unit: unitName
+          };
+        })
         .filter(i => i.grade === targetGrade);
 
       const grouped = filtered.reduce((acc: any, item) => {
@@ -71,7 +79,7 @@ function LessonsContent() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-32" dir="rtl">
-      {/* Header - Fixed UI */}
+      {/* Header - UI Fixed */}
       <div className="bg-[#1D63ED] pt-8 pb-16 px-6 rounded-b-[3rem] shadow-xl relative overflow-hidden text-right">
         <div className="flex justify-between items-center relative z-10 mb-4">
           <button onClick={() => router.push('/profile')} className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-lg border border-white/30 active:scale-90 transition-all">👤</button>
@@ -80,9 +88,9 @@ function LessonsContent() {
           </div>
         </div>
         <div className="relative z-10 text-white flex justify-between items-end">
-          <div>
-            <p className="text-blue-100 font-bold text-xs mb-1 text-right">Welcome, {studentName} 👋</p>
-            <h1 className="text-2xl font-black text-right">{grade}</h1>
+          <div className="text-right">
+            <p className="text-blue-100 font-bold text-xs mb-1">Welcome, {studentName} 👋</p>
+            <h1 className="text-2xl font-black">{grade}</h1>
           </div>
           <div className="bg-white/20 backdrop-blur-md px-3 py-2 rounded-xl border border-white/30 text-center min-w-[70px]">
             <p className="text-[9px] font-bold text-blue-50">Points</p>
@@ -139,7 +147,7 @@ function LessonsContent() {
         )}
       </div>
 
-      {/* Navigation Bar - Fixed UI */}
+      {/* Navigation Bar - Compact Design */}
       <div className="fixed bottom-5 left-10 right-10 bg-white/95 backdrop-blur-md p-2 rounded-[2rem] shadow-2xl border border-gray-100 flex justify-around items-center z-50">
         <button onClick={() => router.push('/profile')} className="flex flex-col items-center gap-0.5 p-1 active:scale-75 transition-all">
           <span className="text-xl opacity-60">👤</span>
