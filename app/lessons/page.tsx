@@ -13,7 +13,6 @@ function LessonsContent() {
   const [loading, setLoading] = useState(true);
   const [studentName, setStudentName] = useState("");
   const [points, setPoints] = useState(0);
-  // إضافة حالة للدروس المكتملة
   const [completedLessons, setCompletedLessons] = useState<string[]>([]);
 
   useEffect(() => {
@@ -21,10 +20,9 @@ function LessonsContent() {
     if (!savedSession) { router.replace("/"); return; }
     const userData = JSON.parse(savedSession);
     setStudentName(userData.name);
-    setPoints(parseInt(localStorage.getItem("ghanem_points") || "0"));
 
-    // تحميل الدروس المكتملة من المتصفح
-    const savedProgress = localStorage.getItem(`progress_${userData.name}`);
+    // تحميل الدروس المكتملة بناءً على الإيميل لضمان الخصوصية
+    const savedProgress = localStorage.getItem(`progress_${userData.email}`);
     if (savedProgress) setCompletedLessons(JSON.parse(savedProgress));
 
     const gradeFromURL = searchParams.get("grade");
@@ -34,20 +32,27 @@ function LessonsContent() {
     if (currentGrade) {
       setGrade(currentGrade);
       localStorage.setItem("last_grade", currentGrade);
-      fetchLessons(currentGrade);
+      fetchLessons(currentGrade, userData.email); // نمرر الإيميل لجلب النقاط
     } else {
       setLoading(false);
     }
   }, [searchParams, router]);
 
-  const fetchLessons = async (targetGrade: string) => {
+  const fetchLessons = async (targetGrade: string, email: string) => {
     try {
       setLoading(true);
       const res = await fetch(`https://docs.google.com/spreadsheets/d/e/2PACX-1vQ-ZJwP0z4SVM4XfAPevqPqsSvbSBRy18i_rbgfVNGYVHBZj10aHtdHqhMj8kKKkI0WHwWLDLFxXniO/pub?output=csv&t=${Date.now()}`);
       const data = await res.text();
       
       const rows = data.split(/\r?\n/).filter(line => line.trim() !== "");
-      
+      const allRows = rows.map(r => r.split(","));
+
+      // الحل الجذري: البحث عن نقاط الطالب الحالي بالإيميل داخل الشيت
+      const currentUser = allRows.find(r => r[4]?.trim().toLowerCase() === email.toLowerCase());
+      if (currentUser) {
+        setPoints(parseInt(currentUser[8]?.trim() || "0"));
+      }
+
       const filtered = rows.slice(1).map(row => {
         const r = row.split(",");
         const unitName = r[r.length - 1]?.replace(/"/g, '').trim() || "General Lessons";
@@ -78,18 +83,21 @@ function LessonsContent() {
     setOpenUnits(prev => ({ ...prev, [unitName]: !prev[unitName] }));
   };
 
-  // وظيفة تعليم الدرس كمكتمل
   const markAsDone = (title: string) => {
+    const savedSession = localStorage.getItem("ghanem_session");
+    if (!savedSession) return;
+    const userData = JSON.parse(savedSession);
+
     if (!completedLessons.includes(title)) {
       const newProgress = [...completedLessons, title];
       setCompletedLessons(newProgress);
-      localStorage.setItem(`progress_${studentName}`, JSON.stringify(newProgress));
+      localStorage.setItem(`progress_${userData.email}`, JSON.stringify(newProgress));
     }
   };
 
   return (
     <div className="min-h-screen bg-gray-50 pb-32" dir="rtl">
-      {/* Header - No UI changes */}
+      {/* الـ Header وباقي الـ UI كما هو تماماً في كودك الأصلي */}
       <div className="bg-[#1D63ED] pt-8 pb-16 px-6 rounded-b-[3rem] shadow-xl relative overflow-hidden text-right">
         <div className="flex justify-between items-center relative z-10 mb-4">
           <button onClick={() => router.push('/profile')} className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-lg border border-white/30 active:scale-90 transition-all">👤</button>
@@ -109,7 +117,6 @@ function LessonsContent() {
         </div>
       </div>
 
-      {/* Units List */}
       <div className="max-w-md mx-auto px-4 mt-[-30px] relative z-20">
         {loading ? (
           <div className="bg-white p-8 rounded-[2rem] shadow-xl text-center font-bold text-blue-600 animate-pulse text-sm">Loading curriculum...</div>
@@ -125,7 +132,6 @@ function LessonsContent() {
                   <div className="p-3 space-y-3 bg-white border-t border-gray-50">
                     {units[unitName].map((lesson, idx) => (
                       <div key={idx} className="p-4 rounded-[1.5rem] border border-gray-50 bg-gray-50/30 text-right relative overflow-hidden">
-                        {/* الإضافة الوحيدة: علامة الصح */}
                         {completedLessons.includes(lesson.title) && (
                           <div className="absolute top-2 left-2 bg-green-500 text-white text-[8px] px-2 py-0.5 rounded-full font-bold shadow-sm">DONE ✅</div>
                         )}
@@ -157,7 +163,7 @@ function LessonsContent() {
         )}
       </div>
 
-      {/* Navigation Bar */}
+      {/* Navigation Bar كما هو */}
       <div className="fixed bottom-5 left-10 right-10 bg-white/95 backdrop-blur-md p-2 rounded-[2rem] shadow-2xl border border-gray-100 flex justify-around items-center z-50">
         <button onClick={() => router.push('/profile')} className="flex flex-col items-center gap-0.5 p-1 active:scale-75 transition-all">
           <span className="text-xl opacity-60">👤</span>
