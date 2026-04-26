@@ -12,14 +12,6 @@ function LessonsContent() {
   const [studentName, setStudentName] = useState("");
   const [points, setPoints] = useState(0);
 
-  // دالة تحديد اللقب بناءً على النقاط
-  const getRank = (pts: number) => {
-    if (pts >= 1000) return { title: "أسطورة غانم 👑", color: "text-yellow-300" };
-    if (pts >= 500) return { title: "النجم الذهبي 🥇", color: "text-orange-300" };
-    if (pts >= 200) return { title: "المستكشف الذكي 🔍", color: "text-blue-200" };
-    return { title: "بطل مبتدئ 🌟", color: "text-gray-300" };
-  };
-
   useEffect(() => {
     const savedSession = localStorage.getItem("ghanem_session");
     if (!savedSession) { router.replace("/"); return; }
@@ -51,13 +43,11 @@ function LessonsContent() {
     if (grade) fetchLessons();
   }, [grade, router]);
 
-  const rank = getRank(points);
-
   return (
     <div className="min-h-screen bg-gray-50 pb-32" dir="rtl">
       <div className="bg-[#1D63ED] pt-10 pb-20 px-6 rounded-b-[3.5rem] shadow-xl relative overflow-hidden text-right">
         <div className="flex justify-between items-center relative z-10 mb-6">
-          <button onClick={() => { localStorage.removeItem("ghanem_session"); router.replace("/"); }} className="bg-white/20 backdrop-blur-md text-white px-4 py-2 rounded-xl font-bold text-sm">خروج 🚪</button>
+          <button onClick={() => { localStorage.removeItem("ghanem_session"); router.replace("/"); }} className="bg-white/20 backdrop-blur-md text-white px-4 py-2 rounded-xl font-bold text-sm hover:bg-white/30 transition-all">خروج 🚪</button>
           <div className="w-12 h-12 bg-white rounded-full p-1 shadow-lg border-2 border-blue-400 overflow-hidden">
             <Image src="/logo.png" alt="Logo" width={48} height={48} className="rounded-full object-contain" priority />
           </div>
@@ -67,12 +57,8 @@ function LessonsContent() {
           <div>
             <p className="text-blue-100 font-bold text-sm mb-1">أهلاً بك، {studentName} 👋</p>
             <h1 className="text-3xl font-black mb-1">{grade}</h1>
-            <p className={`text-xs font-black mt-1 bg-white/10 w-fit px-3 py-1 rounded-full ${rank.color}`}>
-              {rank.title}
-            </p>
             <div className="flex gap-2 mt-4">
-               <button onClick={() => router.push('/honor-roll')} className="bg-[#FFC107] text-[#5D4037] px-4 py-2 rounded-2xl font-black text-[10px] shadow-lg active:scale-95 transition-all">👑 لوحة الشرف</button>
-               <button onClick={() => router.push('/achievements')} className="bg-white text-blue-600 px-4 py-2 rounded-2xl font-black text-[10px] shadow-lg active:scale-95 transition-all">🏆 إنجازاتي</button>
+               <button onClick={() => router.push('/leaderboard')} className="bg-[#FFC107] text-[#5D4037] px-4 py-2 rounded-2xl font-black text-[10px] shadow-lg active:scale-95 hover:brightness-110 transition-all">👑 لوحة الشرف</button>
             </div>
           </div>
           
@@ -90,7 +76,7 @@ function LessonsContent() {
         ) : (
           <div className="space-y-4">
             {lessons.map((lesson, idx) => (
-              <div key={idx} className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-gray-100 flex flex-col gap-4 text-right">
+              <div key={idx} className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-gray-100 flex flex-col gap-4 text-right transform transition-all duration-300 hover:shadow-md">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center text-3xl">📺</div>
@@ -105,13 +91,13 @@ function LessonsContent() {
                   {lesson.keywords && (
                     <button 
                       onClick={() => router.push(`/flashcards?title=${encodeURIComponent(lesson.title)}&grade=${encodeURIComponent(grade)}`)}
-                      className="flex-1 bg-[#FF6D00] text-white py-3 rounded-2xl text-center text-[11px] font-black shadow-md active:scale-95 transition-all"
+                      className="flex-1 bg-indigo-600 text-white py-3 rounded-2xl text-center text-[11px] font-black shadow-md active:scale-95 hover:bg-indigo-700 transition-all"
                     >
                       🧠 تحدي الكلمات
                     </button>
                   )}
                   {lesson.pdf && (
-                    <a href={lesson.pdf} target="_blank" className="flex-1 bg-[#E8F5E9] text-[#2E7D32] py-3 rounded-2xl text-center text-[11px] font-black border border-green-100 flex items-center justify-center active:scale-95">📄 ملخص الدرس</a>
+                    <a href={lesson.pdf} target="_blank" className="flex-1 bg-[#E8F5E9] text-[#2E7D32] py-3 rounded-2xl text-center text-[11px] font-black border border-green-100 flex items-center justify-center active:scale-95 transition-all">📄 ملخص الدرس</a>
                   )}
                 </div>
               </div>
@@ -120,17 +106,17 @@ function LessonsContent() {
         )}
       </div>
 
-      {/* --- الـ Navigation Bar المضافة فقط --- */}
+      {/* الـ Navigation Bar - تم استخدام CSS Transition لسلاسة الضغط */}
       <div className="fixed bottom-6 left-6 right-6 bg-white/90 backdrop-blur-md p-3 rounded-[2.5rem] shadow-2xl border border-gray-100 flex justify-around items-center z-50">
         <button 
           onClick={() => router.push('/achievements')} 
-          className="flex flex-col items-center gap-1 p-2 active:scale-90 transition-all"
+          className="flex flex-col items-center gap-1 p-2 active:scale-75 transition-all duration-200"
         >
           <span className="text-2xl">🎓</span>
           <span className="text-[10px] font-black text-gray-400">الشهادات</span>
         </button>
 
-        <button className="flex flex-col items-center gap-1 p-2">
+        <button className="flex flex-col items-center gap-1 p-2 active:scale-95 transition-all">
           <div className="bg-[#1D63ED] text-white w-14 h-14 flex items-center justify-center rounded-full shadow-lg -mt-10 border-4 border-gray-50">
             <span className="text-2xl">📖</span>
           </div>
@@ -138,8 +124,8 @@ function LessonsContent() {
         </button>
 
         <button 
-          onClick={() => router.push('/honor-roll')} 
-          className="flex flex-col items-center gap-1 p-2 active:scale-90 transition-all"
+          onClick={() => router.push('/leaderboard')} 
+          className="flex flex-col items-center gap-1 p-2 active:scale-75 transition-all duration-200"
         >
           <span className="text-2xl">👑</span>
           <span className="text-[10px] font-black text-gray-400">الأبطال</span>
