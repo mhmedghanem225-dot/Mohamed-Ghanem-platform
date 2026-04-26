@@ -18,12 +18,17 @@ export default function AchievementsPage() {
     if (savedSession) setName(JSON.parse(savedSession).name);
   }, []);
 
-  // دالة لتحديد اللقب بالإنجليزية للشهادة (كما كانت في كودك)
+  // دالة لتحديد اللقب بالإنجليزية للشهادة
   const getEnglishRank = (pts: number) => {
     if (pts >= 1000) return "Ghanem's Legend 👑";
     if (pts >= 500) return "Golden Star Scholar 🥇";
     if (pts >= 200) return "Smart Explorer 🔍";
     return "Junior Hero 🌟";
+  };
+
+  // دالة التحميل والطباعة
+  const handleDownload = () => {
+    window.print();
   };
 
   return (
@@ -32,7 +37,7 @@ export default function AchievementsPage() {
       <button onClick={() => router.back()} className="mb-8 text-blue-600 font-bold flex items-center gap-2 transition-all active:scale-95">🔙 عودة للدروس</button>
       
       <h1 className="text-3xl font-black text-gray-900 mb-2">إنجازاتك يا بطل 🏆</h1>
-      <p className="text-gray-500 font-bold mb-8 italic">Your journey to excellence starts here!</p>
+      <p className="text-gray-500 font-bold mb-8 italic text-sm">Your journey to excellence starts here!</p>
 
       <div className="grid grid-cols-1 gap-6 max-w-md mx-auto">
         {/* كارت النقاط */}
@@ -43,7 +48,7 @@ export default function AchievementsPage() {
           <div className="absolute -right-4 -bottom-4 text-9xl opacity-10">🏆</div>
         </div>
 
-        {/* قسم الشهادة */}
+        {/* قسم الشهادة مع زر التحميل */}
         <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 text-center">
           <div className="text-5xl mb-4 text-blue-600">🎓</div>
           <h3 className="text-xl font-black text-gray-800 mb-2 font-english">Certificate of Excellence</h3>
@@ -54,7 +59,7 @@ export default function AchievementsPage() {
           {points >= 500 ? (
             <div className="flex flex-col gap-3">
               <button 
-                onClick={() => window.print()} 
+                onClick={handleDownload} 
                 className="w-full bg-[#FFC107] text-[#5D4037] py-4 rounded-2xl font-black shadow-lg animate-bounce active:scale-95 transition-all flex items-center justify-center gap-2"
               >
                 📥 تحميل الشهادة (PDF)
@@ -69,58 +74,52 @@ export default function AchievementsPage() {
         </div>
       </div>
 
-      {/* --- تصميم الشهادة المطبوعة (الإطار والخلفية فقط هم من تم تعديلهم) --- */}
-      <div className="hidden print:block fixed inset-0 bg-[#FDF8F3] p-0 overflow-hidden font-serif" dir="ltr">
-        
-        {/* الفريم الذهبي المتموج الجديد */}
-        <div className="absolute -top-10 -right-10 w-[45%] h-[35%] bg-gradient-to-bl from-[#C19E61] to-[#E5D5B8] opacity-90 rounded-b-full shadow-2xl"></div>
-        <div className="absolute -bottom-16 -left-10 w-[40%] h-[30%] bg-gradient-to-tr from-[#C19E61] to-[#E5D5B8] opacity-90 rounded-t-full shadow-2xl"></div>
+      {/* --- تصميم الشهادة المطبوعة (تم تغيير الألوان والإطار فقط هنا) --- */}
+      {/* تم تغيير bg-white إلى bg-[#FDF8F3] (لون كريمي) وتغيير الإطار الأزرق إلى إطار ذهبي فخم #C19E61 */}
+      <div className="hidden print:block fixed inset-0 bg-[#FDF8F3] p-12 border-[15px] border-[#C19E61] text-center font-serif" dir="ltr">
+        <div className="border-4 border-[#C19E61]/40 h-full w-full p-8 flex flex-col justify-between items-center relative bg-white/50 backdrop-blur-sm">
+          
+          <div className="text-[#C19E61]">
+            <h1 className="text-6xl font-serif font-black tracking-widest mb-4">CERTIFICATE</h1>
+            <h2 className="text-2xl tracking-[0.3em] font-light text-gray-500">OF EXCELLENCE</h2>
+          </div>
 
-        {/* المحتوى الأصلي للشهادة داخل الإطار */}
-        <div className="absolute inset-10 border-[15px] border-[#1D63ED] bg-white flex flex-col justify-between items-center p-12 z-10">
-          <div className="border-4 border-[#FFC107] h-full w-full p-8 flex flex-col justify-between items-center relative">
+          <div className="my-10">
+            <p className="text-xl italic text-gray-600 mb-4">This is to certify that the student</p>
+            <p className="text-5xl font-black text-gray-900 border-b-4 border-[#C19E61] px-10 inline-block pb-2">
+              {name}
+            </p>
+          </div>
+
+          <div className="mb-10">
+            <p className="text-lg text-gray-500 mb-2 leading-relaxed px-10">Has successfully demonstrated outstanding performance in English studies and is hereby awarded the title of</p>
+            <p className="text-3xl font-black text-[#C19E61] uppercase tracking-wider">
+               {getEnglishRank(points)}
+            </p>
+          </div>
+
+          <div className="w-full flex justify-between items-end px-12 mt-10">
+            <div className="text-center border-t-2 border-gray-300 pt-2 w-48">
+              <p className="text-xs text-gray-400 italic">Date of Issue</p>
+              <p className="font-bold text-gray-800">{new Date().toLocaleDateString()}</p>
+            </div>
             
-            <div className="text-[#1D63ED]">
-              <h1 className="text-6xl font-serif font-black tracking-widest mb-4">CERTIFICATE</h1>
-              <h2 className="text-2xl tracking-[0.3em] font-light">OF EXCELLENCE</h2>
-            </div>
-
-            <div className="my-10">
-              <p className="text-xl italic text-gray-600 mb-4">This is to certify that the student</p>
-              <p className="text-5xl font-black text-gray-900 border-b-4 border-[#FFC107] px-10 inline-block pb-2">
-                {name}
-              </p>
-            </div>
-
-            <div className="mb-10 text-center">
-              <p className="text-xl text-gray-600 mb-2">Has successfully demonstrated outstanding performance and is hereby awarded the title of</p>
-              <p className="text-3xl font-black text-[#1D63ED] uppercase tracking-wider">
-                 {getEnglishRank(points)}
-              </p>
-            </div>
-
-            <div className="w-full flex justify-between items-end px-12 mt-10">
-              <div className="text-center border-t-2 border-gray-300 pt-2 w-48">
-                <p className="text-xs text-gray-400">Date</p>
-                <p className="font-bold">{new Date().toLocaleDateString()}</p>
+            <div className="flex flex-col items-center">
+              <div className="w-20 h-20 bg-[#FDF8F3] rounded-full flex items-center justify-center border-2 border-[#C19E61] mb-2 shadow-sm">
+                 <span className="text-[#C19E61] font-black text-[10px] text-center leading-tight tracking-tighter">GHANEM<br/>ACADEMY</span>
               </div>
-              
-              <div className="flex flex-col items-center">
-                <div className="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center border-2 border-blue-600 mb-2">
-                   <span className="text-blue-600 font-black text-xs text-center leading-tight">GHANEM<br/>ACADEMY</span>
-                </div>
-                <p className="text-xs italic text-gray-400 font-bold tracking-tighter">Verified Achievement</p>
-              </div>
-
-              <div className="text-center border-t-2 border-gray-300 pt-2 w-48">
-                <p className="text-xs text-gray-400">Instructor</p>
-                <p className="font-black text-lg">Mr. Mohamed Ghanem</p>
-              </div>
+              <p className="text-[10px] uppercase font-bold text-[#C19E61] tracking-widest">Verified</p>
             </div>
 
-            <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] -z-10">
-              <h1 className="text-[15rem] font-black rotate-45">ENGLISH</h1>
+            <div className="text-center border-t-2 border-gray-300 pt-2 w-48">
+              <p className="text-xs text-gray-400 italic">Instructor</p>
+              <p className="font-black text-lg text-gray-900">Mr. Mohamed Ghanem</p>
             </div>
+          </div>
+
+          {/* شعار مائي في الخلفية */}
+          <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] -z-10">
+            <h1 className="text-[15rem] font-black rotate-45 text-[#C19E61]">ENGLISH</h1>
           </div>
         </div>
       </div>
