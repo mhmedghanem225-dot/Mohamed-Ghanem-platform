@@ -3,15 +3,20 @@ export const updateProgressOnSheet = async (type: string, scoreValue?: number) =
   try {
     const savedSession = localStorage.getItem("ghanem_session");
     if (!savedSession) return;
+    
     const { email } = JSON.parse(savedSession);
 
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby4T14R9hasDj3DA7gnPU7InZTlqUfLkZlPdlRH8GbCXhv9WNIQQ9DwiSVbyvLqf8QViQ/exec";
+    // الرابط الخاص بك الذي أرسلته
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyCKjdNlxqbK8GKv3kHIH_CHFVG7xqDbycz4uEWq8Ar/exec";
 
-    await fetch(SCRIPT_URL, {
-      method: "POST",
+    // إرسال البيانات في الرابط لضمان التحديث التلقائي
+    await fetch(`${SCRIPT_URL}?email=${encodeURIComponent(email)}&type=${type}&score=${scoreValue || 0}`, {
+      method: "GET",
       mode: "no-cors",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, type, score: scoreValue || 0 }),
     });
-  } catch (e) { console.error(e); }
+    
+    console.log("✅ Data sent to Mr. Ghanem's Sheet!");
+  } catch (e) {
+    console.error("❌ Error updating sheet:", e);
+  }
 };
