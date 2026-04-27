@@ -13,7 +13,7 @@ export const updateProgressOnSheet = async (type: string, scoreValue?: number) =
     }
 
     // الرابط الأخير بتاعك
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyCKjdNlxqbK8GKv3kHIH_CHFVG7xqDbycz4uEWq8Ar/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzw6EqoZYLuMyJbKLUr3cr97E2CTsZ110OBMluwAk8qQ3KvTyw7nj83VyLVZUVRPCTNdQ/exec";
 
     const finalUrl = `${SCRIPT_URL}?email=${encodeURIComponent(email.trim())}&type=${type}&score=${scoreValue || 0}`;
     
