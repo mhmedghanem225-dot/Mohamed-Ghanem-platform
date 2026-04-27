@@ -7,6 +7,9 @@ export default function AdminDashboard() {
   const [students, setStudents] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
+  // رابط الورقة الثالثة (Students) مباشرة باستخدام الـ GID
+  const SHEET_CSV_URL = `https://docs.google.com/spreadsheets/d/e/2PACX-1vQ-ZJwP0z4SVM4XfAPevqPqsSvbSBRy18i_rbgfVNGYVHBZj10aHtdHqhMj8kKKkI0WHwWLDLFxXniO/pub?gid=643200738&single=true&output=csv&t=${Date.now()}`;
+
   const login = () => {
     if (pass === "012017") {
       setIsAuth(true);
@@ -19,15 +22,15 @@ export default function AdminDashboard() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`https://docs.google.com/spreadsheets/d/e/2PACX-1vQ-ZJwP0z4SVM4XfAPevqPqsSvbSBRy18i_rbgfVNGYVHBZj10aHtdHqhMj8kKKkI0WHwWLDLFxXniO/pub?output=csv&t=${Date.now()}`);
+      const res = await fetch(SHEET_CSV_URL);
       const data = await res.text();
       const rows = data.split(/\r?\n/).map(row => row.split(","));
       
       const parsed = rows.slice(1).filter(r => r[0] && r[0].length > 1).map(r => ({
         name: r[0]?.replace(/"/g, ""),
-        grade: r[3]?.replace(/"/g, "") || "---",  // الصف الدراسي
-        quiz: r[4]?.replace(/"/g, "") || "0",    // الكويز
-        lessons: r[5]?.replace(/"/g, "") || "0" // الدروس
+        grade: r[3]?.replace(/"/g, "") || "---",
+        quiz: r[4]?.replace(/"/g, "") || "0",
+        lessons: r[5]?.replace(/"/g, "") || "0"
       }));
       setStudents(parsed);
     } catch (e) { console.error(e); }
@@ -54,10 +57,9 @@ export default function AdminDashboard() {
           <span className="text-2xl">📊</span>
           <h1 className="text-xl font-black text-gray-800">لوحة متابعة الطلاب</h1>
         </div>
-
         <div className="bg-white rounded-[2rem] shadow-xl overflow-hidden border border-gray-100">
           <table className="w-full text-right text-sm">
-            <thead className="bg-[#1D63ED] text-white font-black text-xs uppercase tracking-wider">
+            <thead className="bg-[#1D63ED] text-white font-black text-xs uppercase">
               <tr>
                 <th className="p-5">الطالب</th>
                 <th className="p-5 text-center">الصف</th>
@@ -67,7 +69,7 @@ export default function AdminDashboard() {
             </thead>
             <tbody className="font-bold">
               {students.map((s, i) => (
-                <tr key={i} className="border-b border-gray-50 hover:bg-blue-50/50 transition-colors">
+                <tr key={i} className="border-b border-gray-50 hover:bg-blue-50 transition-colors">
                   <td className="p-5 text-gray-800">{s.name}</td>
                   <td className="p-5 text-center text-gray-500 text-xs">{s.grade}</td>
                   <td className="p-5 text-center text-green-600 font-black">{s.quiz}%</td>
@@ -76,7 +78,7 @@ export default function AdminDashboard() {
               ))}
             </tbody>
           </table>
-          {loading && <div className="p-10 text-center animate-pulse text-blue-600 font-bold">جاري تحديث البيانات...</div>}
+          {loading && <div className="p-10 text-center text-blue-600 font-bold">جاري تحديث البيانات...</div>}
         </div>
       </div>
     </div>
