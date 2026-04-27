@@ -4,19 +4,21 @@ export const updateProgressOnSheet = async (type: string, scoreValue?: number) =
     const savedSession = localStorage.getItem("ghanem_session");
     if (!savedSession) return;
     
-    const { email } = JSON.parse(savedSession);
+    const userData = JSON.parse(savedSession);
+    const email = userData.email || userData.Email; // للتأكد من قراءة الإيميل سواء كابيتال أو سمول
 
-    // الرابط الخاص بك الذي أرسلته
+    // الرابط بتاعك (تأكد إنه اللي آخره exec)
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyEJWA_7g10lALXELQwD4zV217ozzNY-2EG34BVsEYoAM_Q4JCQcVuB8XwzEz8sSHBUXw/exec";
 
-    // إرسال البيانات في الرابط لضمان التحديث التلقائي
-    await fetch(`${SCRIPT_URL}?email=${encodeURIComponent(email)}&type=${type}&score=${scoreValue || 0}`, {
+    const finalUrl = `${SCRIPT_URL}?email=${encodeURIComponent(email)}&type=${type}&score=${scoreValue || 0}`;
+    
+    await fetch(finalUrl, {
       method: "GET",
       mode: "no-cors",
     });
     
-    console.log("✅ Data sent to Mr. Ghanem's Sheet!");
+    console.log("✅ Sent to Sheet for:", email);
   } catch (e) {
-    console.error("❌ Error updating sheet:", e);
+    console.error("❌ Error:", e);
   }
 };
