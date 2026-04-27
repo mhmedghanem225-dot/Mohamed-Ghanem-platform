@@ -7,7 +7,7 @@ export const updateProgressOnSheet = async (type: string, scoreValue?: number) =
     const { email } = JSON.parse(savedSession);
 
     // الرابط الخاص بك الذي أرسلته
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyCKjdNlxqbK8GKv3kHIH_CHFVG7xqDbycz4uEWq8Ar/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyEJWA_7g10lALXELQwD4zV217ozzNY-2EG34BVsEYoAM_Q4JCQcVuB8XwzEz8sSHBUXw/exec";
 
     // إرسال البيانات في الرابط لضمان التحديث التلقائي
     await fetch(`${SCRIPT_URL}?email=${encodeURIComponent(email)}&type=${type}&score=${scoreValue || 0}`, {
