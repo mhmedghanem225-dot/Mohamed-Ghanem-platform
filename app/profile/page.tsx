@@ -7,7 +7,7 @@ export default function ProfilePage() {
   const [name, setName] = useState("");
   const [points, setPoints] = useState(0);
 
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwr906VCVKPpbeyqwVOpEMrgltgLgzlQTu-wRakX_rBRj60Cuk8BjE4ahG-9ZLNKpg/exec";
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxVfohcewPJYZZudWR9kjntOUOXa8_NJaR3d2Z_hUnIrDRNU7zOo3rxYV590IKOOgKJ1g/exec";
 
   useEffect(() => {
     const syncProfileData = async () => {
@@ -15,15 +15,13 @@ export default function ProfilePage() {
       if (!savedSession) { router.replace("/"); return; }
       
       const userData = JSON.parse(savedSession);
-      const identifier = userData.name || userData.Name;
-      setName(identifier);
+      setName(userData.name || userData.Name);
 
-      // --- جلب أحدث نقاط من العمود H في الشيت مباشرة ---
       try {
-        const response = await fetch(`${SCRIPT_URL}?email=${encodeURIComponent(identifier)}&t=${Date.now()}`);
+        const response = await fetch(`${SCRIPT_URL}?email=${encodeURIComponent(userData.name || userData.Name)}`);
         const freshData = await response.json();
 
-        if (freshData.status === "success" && freshData.user) {
+        if (freshData.status === "success") {
           setPoints(freshData.user.points || 0);
           localStorage.setItem("ghanem_session", JSON.stringify(freshData.user));
         } else {

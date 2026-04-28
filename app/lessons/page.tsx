@@ -15,8 +15,7 @@ function LessonsContent() {
   const [studentName, setStudentName] = useState("");
   const [points, setPoints] = useState(0);
 
-  // الرابط الخاص بك
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwr906VCVKPpbeyqwVOpEMrgltgLgzlQTu-wRakX_rBRj60Cuk8BjE4ahG-9ZLNKpg/exec";
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxVfohcewPJYZZudWR9kjntOUOXa8_NJaR3d2Z_hUnIrDRNU7zOo3rxYV590IKOOgKJ1g/exec";
 
   useEffect(() => {
     const syncData = async () => {
@@ -24,16 +23,13 @@ function LessonsContent() {
       if (!savedSession) { router.replace("/"); return; }
       
       const userData = JSON.parse(savedSession);
-      const identifier = userData.name || userData.Name;
-      setStudentName(identifier);
+      setStudentName(userData.name || userData.Name);
 
-      // --- القراءة المباشرة من العمود H في الشيت ---
+      // جلب أحدث نقاط من الشيت فور فتح الصفحة
       try {
-        // إضافة Timestamp لمنع التخزين المؤقت (Cache) وضمان قراءة أحدث رقم
-        const response = await fetch(`${SCRIPT_URL}?email=${encodeURIComponent(identifier)}&t=${Date.now()}`);
+        const response = await fetch(`${SCRIPT_URL}?email=${encodeURIComponent(userData.name || userData.Name)}`);
         const freshData = await response.json();
-        
-        if (freshData.status === "success" && freshData.user) {
+        if (freshData.status === "success") {
           setPoints(freshData.user.points || 0);
           localStorage.setItem("ghanem_session", JSON.stringify(freshData.user));
         } else {
