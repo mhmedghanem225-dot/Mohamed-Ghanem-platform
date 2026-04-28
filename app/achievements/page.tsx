@@ -6,12 +6,24 @@ export default function AchievementsPage() {
   const router = useRouter();
   const [points, setPoints] = useState(0);
   const [name, setName] = useState("");
-  const [grade, setGrade] = useState(""); // إضافة حالة للصف الدراسي
+  const [grade, setGrade] = useState(""); 
   const [completedCount, setCompletedCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [isEditingName, setIsEditingName] = useState(false);
 
-  // الرابط الخاص بك للمزامنة
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbznUqf35So7SKQ-ZLHWvuBV5q7zR1k9wHrtw58PTNlUvGSaqATyfAWPWvWVSjawBgRidw/exec";
+
+  const getEnglishGrade = (gradeText: string) => {
+    if (!gradeText) return "";
+    const g = gradeText.toLowerCase();
+    if (g.includes("اول") || g.includes("1")) return "Primary 1";
+    if (g.includes("ثاني") || g.includes("2")) return "Primary 2";
+    if (g.includes("ثالث") || g.includes("3")) return "Primary 3";
+    if (g.includes("رابع") || g.includes("4")) return "Primary 4";
+    if (g.includes("خامس") || g.includes("5")) return "Primary 5";
+    if (g.includes("سادس") || g.includes("6")) return "Primary 6";
+    return gradeText;
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -24,23 +36,19 @@ export default function AchievementsPage() {
       const userData = JSON.parse(savedSession);
       const identifier = userData.name || userData.Name;
       setName(identifier);
-      setGrade(userData.grade || ""); // جلب الصف الدراسي من الجلسة
+      setGrade(userData.grade || "");
 
       try {
         setLoading(true);
-        // جلب البيانات الطازجة من الشيت مباشرة لحل مشكلة الصفر
         const response = await fetch(`${SCRIPT_URL}?email=${encodeURIComponent(identifier)}&t=${Date.now()}`);
         const freshData = await response.json();
 
         if (freshData.status === "success" && freshData.user) {
           setPoints(freshData.user.points || 0);
           setCompletedCount(freshData.user.lessons || 0);
-          setGrade(freshData.user.grade || userData.grade); // تحديث الصف الدراسي من الشيت
-          
-          // تحديث الجلسة المحلية بالبيانات الجديدة
+          setGrade(freshData.user.grade || userData.grade);
           localStorage.setItem("ghanem_session", JSON.stringify(freshData.user));
         } else {
-          // في حال فشل الاتصال نعتمد على المخزن مؤقتاً
           setPoints(parseInt(localStorage.getItem("ghanem_points") || "0"));
           const completed = JSON.parse(localStorage.getItem("ghanem_completed_tasks") || "[]");
           setCompletedCount(completed.length);
@@ -74,6 +82,7 @@ export default function AchievementsPage() {
       <p className="text-gray-500 font-bold mb-8 italic text-sm">Your journey to excellence starts here!</p>
 
       <div className="grid grid-cols-1 gap-6 max-w-md mx-auto">
+        {/* كارت النقاط */}
         <div className="bg-gradient-to-br from-[#1D63ED] to-blue-800 p-8 rounded-[2.5rem] text-white shadow-xl relative overflow-hidden">
           <p className="text-blue-100 font-bold mb-1">إجمالي رصيدك</p>
           <p className="text-5xl font-black text-[#FFEB3B]">{loading ? "..." : points}</p>
@@ -81,32 +90,51 @@ export default function AchievementsPage() {
           <div className="absolute -right-4 -bottom-4 text-9xl opacity-10">🏆</div>
         </div>
 
+        {/* قسم الشهادة */}
         <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 text-center">
           <div className="text-5xl mb-4 text-blue-600">🎓</div>
           <h3 className="text-xl font-black text-gray-800 mb-2 font-english">Certificate of Excellence</h3>
-          <p className="text-gray-400 text-[11px] font-bold mb-6 italic leading-relaxed">
-            Congratulations! You can now download your official certificate.
-          </p>
           
           {points >= 500 ? (
-            <div className="flex flex-col gap-3">
-              <button 
-                onClick={handleDownload} 
-                className="w-full bg-[#FFC107] text-[#5D4037] py-4 rounded-2xl font-black shadow-lg animate-bounce active:scale-95 transition-all flex items-center justify-center gap-2"
-              >
-                📥 تحميل الشهادة (PDF)
-              </button>
-              <p className="text-[10px] text-gray-400 font-bold">نصيحة: اختر "Save as PDF" عند الفتح</p>
+            <div className="space-y-4">
+              <p className="text-gray-500 text-[11px] font-bold italic">
+                مبروك! اكتب اسمك الذي تحب أن يظهر في الشهادة:
+              </p>
+              
+              <div className="relative group">
+                <input 
+                  type="text" 
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="اكتب اسمك هنا..."
+                  className="w-full p-4 rounded-xl border-2 border-blue-50 focus:border-blue-500 outline-none text-center font-bold text-gray-700 transition-all"
+                />
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <button 
+                  onClick={handleDownload} 
+                  className="w-full bg-[#FFC107] text-[#5D4037] py-4 rounded-2xl font-black shadow-lg animate-bounce active:scale-95 transition-all flex items-center justify-center gap-2"
+                >
+                  📥 تحميل الشهادة (PDF)
+                </button>
+                <p className="text-[10px] text-gray-400 font-bold italic">تأكد من اختيار "Save as PDF" عند الطباعة</p>
+              </div>
             </div>
           ) : (
-            <div className="w-full bg-gray-100 text-gray-400 py-4 rounded-2xl font-black border border-dashed text-sm">
-              تحتاج {500 - points} نقطة لفتح الشهادة 🔒
-            </div>
+            <>
+              <p className="text-gray-400 text-[11px] font-bold mb-6 italic leading-relaxed">
+                Congratulations! You can now download your official certificate.
+              </p>
+              <div className="w-full bg-gray-100 text-gray-400 py-4 rounded-2xl font-black border border-dashed text-sm">
+                تحتاج {500 - points} نقطة لفتح الشهادة 🔒
+              </div>
+            </>
           )}
         </div>
       </div>
 
-      {/* --- تصميم الشهادة المطبوعة مع إضافة الصف الدراسي --- */}
+      {/* --- الشهادة المطبوعة (تستخدم حالة الاسم الحالية) --- */}
       <div className="hidden print:block fixed inset-0 bg-[#FDF8F3] p-12 border-[15px] border-[#C19E61] text-center font-serif" dir="ltr">
         <div className="border-4 border-[#C19E61]/40 h-full w-full p-8 flex flex-col justify-between items-center relative bg-white/50 backdrop-blur-sm">
           
@@ -120,9 +148,8 @@ export default function AchievementsPage() {
             <p className="text-5xl font-black text-gray-900 border-b-4 border-[#C19E61] px-10 inline-block pb-2">
               {name}
             </p>
-            {/* إضافة الصف الدراسي هنا */}
             <p className="text-xl font-bold text-blue-800 mt-4 tracking-widest">
-              {grade ? `Grade: ${grade}` : ""}
+              {grade ? `Grade: ${getEnglishGrade(grade)}` : ""}
             </p>
           </div>
 
