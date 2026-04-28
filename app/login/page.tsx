@@ -7,19 +7,17 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // تنظيف شامل بمجرد تحميل الصفحة
+  // مسح شامل للذاكرة بمجرد فتح صفحة الدخول
   useEffect(() => {
     if (typeof window !== "undefined") {
       localStorage.clear();
       sessionStorage.clear();
-      // مسح الكوكيز لضمان عدم استرجاع أي جلسة قديمة
-      const cookies = document.cookie.split(";");
-      for (let i = 0; i < cookies.length; i++) {
-        const cookie = cookies[i];
-        const eqPos = cookie.indexOf("=");
-        const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
-        document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
-      }
+      // مسح الكوكيز لضمان نظافة الجلسة تماماً
+      document.cookie.split(";").forEach((c) => {
+        document.cookie = c
+          .replace(/^ +/, "")
+          .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+      });
     }
   }, []);
 
@@ -30,19 +28,20 @@ export default function LoginPage() {
 
     try {
       const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyCKjdNlxqbK8GKv3kHIH_CHFVG7xqDbycz4uEWq8Ar/exec";
+      
+      // طلب البيانات من جوجل شيت مباشرة
       const response = await fetch(`${SCRIPT_URL}?email=${encodeURIComponent(email.trim())}`);
       const data = await response.json();
 
       if (data.status === "success") {
-        // مسح أخير قبل تخزين البيانات الجديدة
+        // مسح أخير قبل تخزين بيانات الطالب الجديد القادمة من الشيت
         localStorage.clear();
         localStorage.setItem("ghanem_session", JSON.stringify(data.user));
         
-        // السر هنا: استخدام window.location.replace بدلاً من router.push
-        // ده بيخلي المتصفح يرمي الصفحة القديمة ببياناتها ويفتح صفحة جديدة تماماً ببيانات الطالب الجديد
+        // الانتقال مع تحديث كامل للمتصفح لمزامنة النقاط الجديدة
         window.location.replace("/dashboard");
       } else {
-        setError("عذراً، هذا البريد غير مسجل أو البيانات غير صحيحة.");
+        setError("عذراً، هذا الاسم أو البريد غير مسجل.");
       }
     } catch (err) {
       setError("حدث خطأ في الاتصال، يرجى المحاولة مرة أخرى.");
@@ -56,14 +55,12 @@ export default function LoginPage() {
       <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-2xl shadow-xl border border-gray-100">
         <div className="text-center">
           <h2 className="text-3xl font-extrabold text-gray-900">منصة مستر محمد غانم</h2>
-          <p className="mt-2 text-sm text-gray-600">سجل دخولك الآن للبدء</p>
+          <p className="mt-2 text-sm text-gray-600">سجل دخولك الآن لمتابعة نقاطك</p>
         </div>
         
         <form className="mt-8 space-y-6" onSubmit={handleLogin}>
           <div className="rounded-md shadow-sm">
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-              البريد الإلكتروني أو الاسم
-            </label>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">البريد الإلكتروني أو الاسم</label>
             <input
               type="text"
               required
@@ -73,13 +70,11 @@ export default function LoginPage() {
               onChange={(e) => setEmail(e.target.value)}
             />
           </div>
-
           {error && <div className="text-red-500 text-sm bg-red-50 p-2 rounded-lg text-center">{error}</div>}
-
           <button
             type="submit"
             disabled={loading}
-            className="w-full flex justify-center py-3 px-4 text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 transition-all"
+            className="w-full flex justify-center py-3 px-4 text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 transition-all disabled:opacity-50"
           >
             {loading ? "جاري التحقق..." : "دخول الآن"}
           </button>
