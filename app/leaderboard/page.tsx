@@ -1,85 +1,110 @@
 "use client";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+
+interface Student {
+  name: string;
+  points: number;
+}
 
 export default function LeaderboardPage() {
   const router = useRouter();
-  const [students, setStudents] = useState<any[]>([]);
+  const [leaders, setLeaders] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // الرابط الخاص بجلب كل البيانات من الشيت
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbznUqf35So7SKQ-ZLHWvuBV5q7zR1k9wHrtw58PTNlUvGSaqATyfAWPWvWVSjawBgRidw/exec";
 
   useEffect(() => {
     const fetchLeaders = async () => {
       try {
-        const res = await fetch(`https://docs.google.com/spreadsheets/d/e/2PACX-1vQ-ZJwP0z4SVM4XfAPevqPqsSvbSBRy18i_rbgfVNGYVHBZj10aHtdHqhMj8kKKkI0WHwWLDLFxXniO/pub?output=csv&t=${Date.now()}`);
-        const data = await res.text();
-        
-        // تقسيم الأسطر
-        const rows = data.split(/\r?\n/).filter(line => line.trim() !== "");
-        
-        const leaderData = rows.slice(1)
-          .map(row => {
-            const r = row.split(",");
-            // جلب الاسم من العمود السادس (F) -> index 5
-            const name = r[5]?.trim();
-            
-            // جلب النقاط من العمود التاسع (I) -> index 8
-            // لو العمود J موجود، فالنقاط هي القيمة اللي قبل الأخيرة
-            const points = parseInt(r[8]?.trim() || "0");
+        setLoading(true);
+        // نرسل طلب لجلب قائمة المتصدرين (تأكد أن السكريبت يدعم جلب الكل)
+        const response = await fetch(`${SCRIPT_URL}?action=getLeaders&t=${Date.now()}`);
+        const data = await response.json();
 
-            return { name, points };
-          })
-          // الفلترة: لازم يكون فيه اسم، والنقاط رقم صحيح (حتى لو صفر هنظهره عشان تتأكد إن الكل قرأ)
-          .filter(s => s.name && s.name !== "" && !isNaN(s.points))
-          .sort((a, b) => b.points - a.points)
-          .slice(0, 20); // خليناها 20 طالب عشان تشوف الكل
-
-        setStudents(leaderData);
+        if (data.status === "success") {
+          // ترتيب الطلاب من الأعلى للأقل نقاطاً
+          const sorted = data.users.sort((a: any, b: any) => b.points - a.points);
+          setLeaders(sorted);
+        }
+      } catch (error) {
+        console.error("Failed to fetch leaders:", error);
+      } finally {
         setLoading(false);
-      } catch (e) { setLoading(false); }
+      }
     };
+
     fetchLeaders();
   }, []);
 
+  // فصل الثلاثة الأوائل عن بقية القائمة
+  const topThree = leaders.slice(0, 3);
+  const others = leaders.slice(3);
+
+  if (loading) return <div className="min-h-screen flex items-center justify-center font-bold text-blue-600">جاري تحميل لوحة الأبطال... 🏆</div>;
+
   return (
-    <div className="min-h-screen bg-gray-50 p-6 text-right pb-32" dir="rtl">
-      <h1 className="text-2xl font-black text-gray-900 mb-6 text-center">👑 Honor Roll</h1>
-      
-      <div className="max-w-md mx-auto space-y-3">
-        {loading ? (
-          <div className="text-center font-bold text-blue-600 animate-pulse py-10 text-sm">Updating Scores...</div>
-        ) : students.length > 0 ? (
-          students.map((student, idx) => (
-            <div key={idx} className={`bg-white p-4 rounded-2xl flex justify-between items-center shadow-sm border ${idx === 0 ? 'border-yellow-400 ring-2 ring-yellow-100' : 'border-gray-100'}`}>
-              <div className="flex items-center gap-3">
-                <span className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-sm ${idx === 0 ? 'bg-yellow-400 text-white' : 'bg-gray-100 text-gray-400'}`}>
-                  {idx + 1}
-                </span>
-                <span className="font-bold text-gray-800 text-xs">{student.name}</span>
-              </div>
-              <span className="font-black text-blue-600 text-sm">{student.points} pt</span>
+    <div className="min-h-screen bg-[#F0F7FF] pb-24 text-right" dir="rtl">
+      {/* Header */}
+      <div className="bg-white p-6 rounded-b-[3rem] shadow-sm mb-8 text-center border-b-4 border-blue-100">
+        <h1 className="text-3xl font-black text-gray-800 mb-1">لوحة الشرف 👑</h1>
+        <p className="text-blue-500 font-bold text-sm italic">Top Students - Honor Roll</p>
+      </div>
+
+      {/* Podium Section (التصميم الجذاب القديم) */}
+      <div className="flex justify-center items-end gap-2 mb-12 px-4 pt-10 h-64">
+        {/* المركز الثاني */}
+        {topThree[1] && (
+          <div className="flex flex-col items-center group">
+            <div className="text-xs font-black mb-2 text-gray-500 truncate w-20 text-center">{topThree[1].name}</div>
+            <div className="w-20 bg-gradient-to-t from-gray-300 to-gray-100 h-32 rounded-t-2xl shadow-lg flex flex-col items-center justify-center border-x-2 border-t-2 border-white relative">
+               <span className="text-4xl">🥈</span>
+               <span className="font-black text-gray-700 mt-1">{topThree[1].points}</span>
             </div>
-          ))
-        ) : (
-          <div className="text-center py-10 text-gray-400 font-bold text-xs">No students with scores yet.</div>
+          </div>
+        )}
+
+        {/* المركز الأول - البطل */}
+        {topThree[0] && (
+          <div className="flex flex-col items-center -mt-10 group">
+            <div className="bg-yellow-400 text-white text-[10px] px-2 py-0.5 rounded-full mb-1 animate-bounce font-bold">THE KING</div>
+            <div className="text-sm font-black mb-2 text-blue-900 truncate w-24 text-center">{topThree[0].name}</div>
+            <div className="w-28 bg-gradient-to-t from-yellow-400 to-yellow-200 h-44 rounded-t-3xl shadow-[0_10px_20px_rgba(255,193,7,0.3)] flex flex-col items-center justify-center border-x-4 border-t-4 border-white relative overflow-hidden">
+               <div className="absolute top-0 left-0 w-full h-full bg-white/20 -skew-x-12 translate-x-full group-hover:-translate-x-full transition-transform duration-1000"></div>
+               <span className="text-6xl drop-shadow-md">🥇</span>
+               <span className="font-black text-yellow-900 text-xl mt-2">{topThree[0].points}</span>
+            </div>
+          </div>
+        )}
+
+        {/* المركز الثالث */}
+        {topThree[2] && (
+          <div className="flex flex-col items-center group">
+            <div className="text-xs font-black mb-2 text-gray-500 truncate w-20 text-center">{topThree[2].name}</div>
+            <div className="w-20 bg-gradient-to-t from-orange-300 to-orange-100 h-24 rounded-t-2xl shadow-lg flex flex-col items-center justify-center border-x-2 border-t-2 border-white relative">
+               <span className="text-4xl">🥉</span>
+               <span className="font-black text-orange-900 mt-1">{topThree[2].points}</span>
+            </div>
+          </div>
         )}
       </div>
 
-      {/* Nav Bar ثابتة */}
-      <div className="fixed bottom-5 left-10 right-10 bg-white/95 backdrop-blur-md p-2 rounded-[2rem] shadow-2xl border border-gray-100 flex justify-around items-center z-50">
-        <button onClick={() => router.push('/profile')} className="flex flex-col items-center gap-0.5 p-1 active:scale-75 transition-all">
-          <span className="text-xl opacity-60">👤</span>
-          <span className="text-[9px] font-black text-gray-400">Profile</span>
-        </button>
-        <button onClick={() => router.push('/lessons')} className="flex flex-col items-center gap-0.5 p-1 active:scale-75 transition-all">
-          <span className="text-xl opacity-60">📖</span>
-          <span className="text-[9px] font-black text-gray-400">Lessons</span>
-        </button>
-        <button className="flex flex-col items-center gap-0.5 p-1">
-          <div className="bg-[#1D63ED] text-white w-12 h-12 flex items-center justify-center rounded-full shadow-lg -mt-8 border-[3px] border-gray-50 transition-all">
-            <span className="text-xl">👑</span>
+      {/* بقية القائمة */}
+      <div className="max-w-md mx-auto px-6 space-y-3">
+        {others.map((student, index) => (
+          <div key={index} className="bg-white p-4 rounded-2xl flex items-center justify-between shadow-sm border border-blue-50 transition-transform active:scale-95">
+            <div className="flex items-center gap-4">
+              <span className="bg-blue-50 text-blue-600 w-8 h-8 rounded-full flex items-center justify-center font-black text-xs">
+                {index + 4}
+              </span>
+              <span className="font-bold text-gray-700">{student.name}</span>
+            </div>
+            <div className="bg-blue-600 text-white px-3 py-1 rounded-lg font-black text-xs">
+              {student.points} pt
+            </div>
           </div>
-          <span className="text-[9px] font-black text-[#1D63ED]">Leaders</span>
-        </button>
+        ))}
       </div>
     </div>
   );
