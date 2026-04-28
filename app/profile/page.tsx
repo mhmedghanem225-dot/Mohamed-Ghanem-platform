@@ -7,6 +7,8 @@ export default function ProfilePage() {
   const [name, setName] = useState("");
   const [points, setPoints] = useState(0);
 
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwr906VCVKPpbeyqwVOpEMrgltgLgzlQTu-wRakX_rBRj60Cuk8BjE4ahG-9ZLNKpg/exec";
+
   useEffect(() => {
     const syncProfileData = async () => {
       const savedSession = localStorage.getItem("ghanem_session");
@@ -15,25 +17,19 @@ export default function ProfilePage() {
       const userData = JSON.parse(savedSession);
       setName(userData.name || userData.Name);
 
-      // --- التعديل الجوهري لمزامنة النقاط أونلاين ---
       try {
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwr906VCVKPpbeyqwVOpEMrgltgLgzlQTu-wRakX_rBRj60Cuk8BjE4ahG-9ZLNKpg/exec";
         const response = await fetch(`${SCRIPT_URL}?email=${encodeURIComponent(userData.name || userData.Name)}`);
         const freshData = await response.json();
 
         if (freshData.status === "success") {
-          // تحديث النقاط بالرقم الحقيقي القادم من جوجل شيت
           setPoints(freshData.user.points || 0);
-          // تحديث الجلسة المحلية لضمان ثبات البيانات
           localStorage.setItem("ghanem_session", JSON.stringify(freshData.user));
         } else {
           setPoints(userData.points || 0);
         }
       } catch (e) {
-        // في حالة فشل الاتصال، نعرض المسجل في الجلسة مؤقتاً
         setPoints(userData.points || 0);
       }
-      // ------------------------------------------
     };
 
     syncProfileData();
@@ -45,9 +41,7 @@ export default function ProfilePage() {
       
       <div className="max-w-md mx-auto">
         <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-100 text-center mb-6">
-          <div className="w-20 h-20 bg-blue-100 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl shadow-inner">
-            👤
-          </div>
+          <div className="w-20 h-20 bg-blue-100 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl shadow-inner">👤</div>
           <h2 className="text-lg font-black text-gray-800">{name}</h2>
           <p className="text-blue-600 font-bold text-sm">Ghanem Academy Hero</p>
         </div>
@@ -72,7 +66,6 @@ export default function ProfilePage() {
         </button>
       </div>
 
-      {/* Unified Compact Navigation Bar - كما هي بدون تغيير */}
       <div className="fixed bottom-5 left-10 right-10 bg-white/95 backdrop-blur-md p-2 rounded-[2rem] shadow-2xl border border-gray-100 flex justify-around items-center z-50">
         <button className="flex flex-col items-center gap-0.5 p-1">
           <div className="bg-[#1D63ED] text-white w-12 h-12 flex items-center justify-center rounded-full shadow-lg -mt-8 border-[3px] border-gray-50 transition-all">
@@ -80,12 +73,10 @@ export default function ProfilePage() {
           </div>
           <span className="text-[9px] font-black text-[#1D63ED]">Profile</span>
         </button>
-
         <button onClick={() => router.push('/lessons')} className="flex flex-col items-center gap-0.5 p-1 active:scale-75 transition-all">
           <span className="text-xl opacity-60">📖</span>
           <span className="text-[9px] font-black text-gray-400">Lessons</span>
         </button>
-
         <button onClick={() => router.push('/leaderboard')} className="flex flex-col items-center gap-0.5 p-1 active:scale-75 transition-all">
           <span className="text-xl opacity-60">👑</span>
           <span className="text-[9px] font-black text-gray-400">Leaders</span>

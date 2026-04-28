@@ -15,6 +15,8 @@ function LessonsContent() {
   const [studentName, setStudentName] = useState("");
   const [points, setPoints] = useState(0);
 
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwr906VCVKPpbeyqwVOpEMrgltgLgzlQTu-wRakX_rBRj60Cuk8BjE4ahG-9ZLNKpg/exec";
+
   useEffect(() => {
     const syncData = async () => {
       const savedSession = localStorage.getItem("ghanem_session");
@@ -23,16 +25,12 @@ function LessonsContent() {
       const userData = JSON.parse(savedSession);
       setStudentName(userData.name || userData.Name);
 
-      // --- التعديل الجوهري للمزامنة ---
+      // جلب أحدث نقاط من الشيت فور فتح الصفحة
       try {
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwr906VCVKPpbeyqwVOpEMrgltgLgzlQTu-wRakX_rBRj60Cuk8BjE4ahG-9ZLNKpg/exec";
         const response = await fetch(`${SCRIPT_URL}?email=${encodeURIComponent(userData.name || userData.Name)}`);
         const freshData = await response.json();
-
         if (freshData.status === "success") {
-          // تحديث النقاط بالرقم الحقيقي من الشيت
           setPoints(freshData.user.points || 0);
-          // تحديث الجلسة في المتصفح عشان تفضل الأرقام متزامنة
           localStorage.setItem("ghanem_session", JSON.stringify(freshData.user));
         } else {
           setPoints(userData.points || 0);
@@ -40,7 +38,6 @@ function LessonsContent() {
       } catch (e) {
         setPoints(userData.points || 0);
       }
-      // -------------------------------
 
       const gradeFromURL = searchParams.get("grade");
       const lastSavedGrade = localStorage.getItem("last_grade");
@@ -95,15 +92,12 @@ function LessonsContent() {
   };
 
   const handleWatchLesson = async (videoUrl: string) => {
-    // تحديث الشيت
     await updateProgressOnSheet("lesson");
-    // فتح الفيديو
     window.open(videoUrl, "_blank");
   };
 
   return (
     <div className="min-h-screen bg-gray-50 pb-32" dir="rtl">
-      {/* التصميم بالكامل كما هو في كودك الأصلي بدون تغيير حرف واحد */}
       <div className="bg-[#1D63ED] pt-8 pb-16 px-6 rounded-b-[3rem] shadow-xl relative overflow-hidden text-right">
         <div className="flex justify-between items-center relative z-10 mb-4">
           <button onClick={() => router.push('/profile')} className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-lg border border-white/30 active:scale-90 transition-all">👤</button>
