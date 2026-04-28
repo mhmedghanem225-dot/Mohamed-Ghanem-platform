@@ -5,26 +5,22 @@ export const updateProgressOnSheet = async (type: string, scoreValue?: number) =
     if (!savedSession) return;
     
     const userData = JSON.parse(savedSession);
-    const email = userData.email || userData.Email;
+    // سحب الاسم كما هو موجود في الصورة (name)
+    const identifier = userData.name || userData.Name;
 
-    if (!email) {
-      alert("خطأ: الإيميل غير موجود في الجلسة، يرجى تسجيل الخروج والدخول ثانية");
-      return;
-    }
+    if (!identifier) return;
 
-    // الرابط الأخير بتاعك
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzw6EqoZYLuMyJbKLUr3cr97E2CTsZ110OBMluwAk8qQ3KvTyw7nj83VyLVZUVRPCTNdQ/exec";
+    // ضع رابط الـ exec الجديد هنا
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzBC2RkIlu-z3tH1SpmKsVr1Ndi1jl8HEjjODeWXX-Zl_f68v84udG8pdQhb1S2W-p21w/exec";
 
-    const finalUrl = `${SCRIPT_URL}?email=${encodeURIComponent(email.trim())}&type=${type}&score=${scoreValue || 0}`;
+    const finalUrl = `${SCRIPT_URL}?email=${encodeURIComponent(identifier.trim())}&type=${type}&score=${scoreValue || 0}`;
     
-    // تنبيه للتجربة (ممكن تمسحه بعد ما تتأكد)
-    console.log("إرسال بيانات للطالب: " + email);
-
     await fetch(finalUrl, {
       method: "GET",
       mode: "no-cors",
     });
     
+    console.log("✅ Update sent for:", identifier);
   } catch (e) {
     console.error("❌ Error:", e);
   }
