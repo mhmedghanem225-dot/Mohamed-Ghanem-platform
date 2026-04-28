@@ -15,13 +15,15 @@ export default function ProfilePage() {
       if (!savedSession) { router.replace("/"); return; }
       
       const userData = JSON.parse(savedSession);
-      setName(userData.name || userData.Name);
+      const identifier = userData.name || userData.Name;
+      setName(identifier);
 
+      // --- جلب أحدث نقاط من العمود H في الشيت مباشرة ---
       try {
-        const response = await fetch(`${SCRIPT_URL}?email=${encodeURIComponent(userData.name || userData.Name)}`);
+        const response = await fetch(`${SCRIPT_URL}?email=${encodeURIComponent(identifier)}&t=${Date.now()}`);
         const freshData = await response.json();
 
-        if (freshData.status === "success") {
+        if (freshData.status === "success" && freshData.user) {
           setPoints(freshData.user.points || 0);
           localStorage.setItem("ghanem_session", JSON.stringify(freshData.user));
         } else {
