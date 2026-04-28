@@ -8,35 +8,41 @@ export default function AchievementsPage() {
   const [completedLessons, setCompletedLessons] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwr906VCVKPpbeyqwVOpEMrgltgLgzlQTu-wRakX_rBRj60Cuk8BjE4ahG-9ZLNKpg/exec";
+  // الرابط الخاص بك المحدث
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbznUqf35So7SKQ-ZLHWvuBV5q7zR1k9wHrtw58PTNlUvGSaqATyfAWPWvWVSjawBgRidw/exec";
 
   useEffect(() => {
     const fetchAchievements = async () => {
       const savedSession = localStorage.getItem("ghanem_session");
-      if (!savedSession) { router.replace("/"); return; }
+      if (!savedSession) { 
+        router.replace("/"); 
+        return; 
+      }
       
       const userData = JSON.parse(savedSession);
       const identifier = userData.name || userData.Name;
 
       try {
         setLoading(true);
-        // جلب البيانات الطازجة من الشيت مباشرة (الاسم، النقاط، والدروس)
+        // جلب البيانات مع Timestamp لمنع التخزين المؤقت وضمان التحديث عند تسجيل الدخول
         const response = await fetch(`${SCRIPT_URL}?email=${encodeURIComponent(identifier)}&t=${Date.now()}`);
         const freshData = await response.json();
 
         if (freshData.status === "success" && freshData.user) {
-          // تحديث النقاط من العمود H (index 7) والدروس من العمود F (index 5)
+          // تحديث الواجهة بالنقاط والدروس المكتملة من الشيت مباشرة
           setPoints(freshData.user.points || 0);
           setCompletedLessons(freshData.user.lessons || 0);
           
-          // تحديث الجلسة المحلية لضمان استمرار المزامنة
+          // تحديث الذاكرة المحلية لضمان عمل الشهادات بشكل سليم
           localStorage.setItem("ghanem_session", JSON.stringify(freshData.user));
         } else {
           setPoints(userData.points || 0);
+          setCompletedLessons(userData.lessons || 0);
         }
       } catch (e) {
         console.error("Error fetching achievements:", e);
         setPoints(userData.points || 0);
+        setCompletedLessons(userData.lessons || 0);
       } finally {
         setLoading(false);
       }
@@ -67,7 +73,7 @@ export default function AchievementsPage() {
               <div className="absolute -top-4 -right-8 text-4xl opacity-20">🏆</div>
            </div>
            <div className="mt-4 bg-white/20 backdrop-blur-md px-4 py-1 rounded-full text-[10px] font-bold flex items-center gap-2">
-             ✅ Completed Lessons: {completedLessons}
+             Completed Lessons: {completedLessons} ✅
            </div>
         </div>
 
