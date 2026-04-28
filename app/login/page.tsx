@@ -19,7 +19,7 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyCKjdNlxqbK8GKv3kHIH_CHFVG7xqDbycz4uEWq8Ar/exec";
+      const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwr906VCVKPpbeyqwVOpEMrgltgLgzlQTu-wRakX_rBRj60Cuk8BjE4ahG-9ZLNKpg/exec";
       
       // جلب البيانات "الحية" من السيرفر بناءً على الاسم
       const response = await fetch(`${SCRIPT_URL}?email=${encodeURIComponent(email.trim())}`);

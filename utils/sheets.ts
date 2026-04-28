@@ -10,7 +10,7 @@ export const updateProgressOnSheet = async (type: string, scoreValue?: number) =
     const identifier = userData.name || userData.Name;
     if (!identifier) return;
 
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzBC2RkIlu-z3tH1SpmKsVr1Ndi1jl8HEjjODeWXX-Zl_f68v84udG8pdQhb1S2W-p21w/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwr906VCVKPpbeyqwVOpEMrgltgLgzlQTu-wRakX_rBRj60Cuk8BjE4ahG-9ZLNKpg/exec";
 
     // 1. إرسال التحديث للشيت
     const updateUrl = `${SCRIPT_URL}?email=${encodeURIComponent(identifier.trim())}&type=${type}&score=${scoreValue || 0}`;
