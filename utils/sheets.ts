@@ -1,33 +1,30 @@
 export const updateProgressOnSheet = async (type: string, scoreValue?: number) => {
+  const session = localStorage.getItem("ghanem_session");
+  if (!session) return;
+  
+  const user = JSON.parse(session);
+  const identifier = user.name || user.Name;
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwr906VCVKPpbeyqwVOpEMrgltgLgzlQTu-wRakX_rBRj60Cuk8BjE4ahG-9ZLNKpg/exec";
+
   try {
-    const savedSession = localStorage.getItem("ghanem_session");
-    if (!savedSession) {
-      localStorage.clear();
-      return;
-    }
+    // 1. إرسال الطلب للشيت
+    const finalScore = type === "quiz" ? 50 : (scoreValue || 0);
+    const url = `${SCRIPT_URL}?email=${encodeURIComponent(identifier)}&type=${type}&score=${finalScore}`;
     
-    const userData = JSON.parse(savedSession);
-    const identifier = userData.name || userData.Name;
-    if (!identifier) return;
-
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwr906VCVKPpbeyqwVOpEMrgltgLgzlQTu-wRakX_rBRj60Cuk8BjE4ahG-9ZLNKpg/exec";
-
-    // 1. إرسال التحديث للشيت
-    const updateUrl = `${SCRIPT_URL}?email=${encodeURIComponent(identifier.trim())}&type=${type}&score=${scoreValue || 0}`;
-    await fetch(updateUrl, { method: "GET", mode: "no-cors" });
-
-    // 2. جلب أحدث البيانات من الشيت فوراً (المزامنة)
-    const response = await fetch(`${SCRIPT_URL}?email=${encodeURIComponent(identifier.trim())}`);
-    const freshData = await response.json();
-
-    if (freshData.status === "success") {
-      // تحديث ذاكرة الجهاز بالبيانات الحقيقية القادمة من الشيت
-      localStorage.setItem("ghanem_session", JSON.stringify(freshData.user));
-      // إعادة تحميل بسيطة لتحديث الأرقام أمام الطالب
-      window.location.reload();
+    const res = await fetch(url);
+    const result = await res.json();
+    
+    // 2. التعديل الجوهري: تحديث بيانات المتصفح فوراً بالرد القادم من الشيت
+    if (result.status === "success" && result.user) {
+       // هنا بنحدث الـ localStorage بالنقاط الجديدة اللي السكريبت حسبها
+       localStorage.setItem("ghanem_session", JSON.stringify(result.user));
+       
+       // إطلاق حدث (Event) لإخبار كل الصفحات (البروفايل والدروس) بأن البيانات تغيرت
+       window.dispatchEvent(new Event("storage_updated"));
+       
+       console.log("Points updated in sheet and locally:", result.user.points);
     }
-
   } catch (e) {
-    console.error("❌ Sync Error:", e);
+    console.error("Sync Error:", e);
   }
 };
