@@ -1,67 +1,96 @@
 "use client";
-
-import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function ProfilePage() {
-  const [student, setStudent] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+  const [name, setName] = useState("");
+  const [points, setPoints] = useState(0);
 
   useEffect(() => {
-    const loadAndSyncProfile = async () => {
+    const syncProfileData = async () => {
+      const savedSession = localStorage.getItem("ghanem_session");
+      if (!savedSession) { router.replace("/"); return; }
+      
+      const userData = JSON.parse(savedSession);
+      setName(userData.name || userData.Name);
+
+      // --- التعديل الجوهري لمزامنة النقاط أونلاين ---
       try {
-        const session = localStorage.getItem("ghanem_session");
-        if (!session) {
-          window.location.href = "/login";
-          return;
-        }
-
-        const localUser = JSON.parse(session);
-        const identifier = localUser.name || localUser.Name;
-
-        // المزامنة الحية مع جوجل شيت
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyCKjdNlxqbK8GKv3kHIH_CHFVG7xqDbycz4uEWq8Ar/exec";
-        const res = await fetch(`${SCRIPT_URL}?email=${encodeURIComponent(identifier)}`);
-        const data = await res.json();
+        const response = await fetch(`${SCRIPT_URL}?email=${encodeURIComponent(userData.name || userData.Name)}`);
+        const freshData = await response.json();
 
-        if (data.status === "success") {
-          // تحديث الذاكرة المحلية بالبيانات الجديدة من الشيت
-          localStorage.setItem("ghanem_session", JSON.stringify(data.user));
-          setStudent(data.user);
+        if (freshData.status === "success") {
+          // تحديث النقاط بالرقم الحقيقي القادم من جوجل شيت
+          setPoints(freshData.user.points || 0);
+          // تحديث الجلسة المحلية لضمان ثبات البيانات
+          localStorage.setItem("ghanem_session", JSON.stringify(freshData.user));
         } else {
-          setStudent(localUser);
+          setPoints(userData.points || 0);
         }
       } catch (e) {
-        console.error("Sync error:", e);
-      } finally {
-        setLoading(false);
+        // في حالة فشل الاتصال، نعرض المسجل في الجلسة مؤقتاً
+        setPoints(userData.points || 0);
       }
+      // ------------------------------------------
     };
 
-    loadAndSyncProfile();
-  }, []);
-
-  if (loading) return <div className="text-center mt-10">جاري تحميل بياناتك الحقيقية...</div>;
-  if (!student) return null;
+    syncProfileData();
+  }, [router]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* --- ابدأ وضع تصميمك (UI) هنا كما هو بدون تغيير --- */}
-      <div className="max-w-4xl mx-auto p-6">
-        <div className="bg-white shadow rounded-2xl p-8 text-right border border-gray-100">
-          <h1 className="text-3xl font-bold text-gray-900">{student.name || student.Name}</h1>
-          <div className="mt-6 grid grid-cols-2 gap-4">
-            <div className="bg-blue-50 p-4 rounded-xl">
-              <p className="text-sm text-blue-600">إجمالي النقاط</p>
-              <p className="text-2xl font-bold text-blue-900">{student.points || 0}</p>
-            </div>
-            <div className="bg-green-50 p-4 rounded-xl">
-              <p className="text-sm text-green-600">الدروس المكتملة</p>
-              <p className="text-2xl font-bold text-green-900">{student.completedLessons || 0}</p>
-            </div>
+    <div className="min-h-screen bg-gray-50 p-6 text-right pb-32" dir="rtl">
+      <h1 className="text-2xl font-black text-gray-900 mb-6 text-center">My Profile 👤</h1>
+      
+      <div className="max-w-md mx-auto">
+        <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-100 text-center mb-6">
+          <div className="w-20 h-20 bg-blue-100 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl shadow-inner">
+            👤
           </div>
+          <h2 className="text-lg font-black text-gray-800">{name}</h2>
+          <p className="text-blue-600 font-bold text-sm">Ghanem Academy Hero</p>
         </div>
+
+        <div className="grid grid-cols-2 gap-4 mb-6">
+          <div className="bg-white p-5 rounded-[2rem] shadow-sm border border-gray-100 text-center">
+            <p className="text-xl mb-1">🏆</p>
+            <p className="text-lg font-black text-gray-800">{points}</p>
+            <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">Total Points</p>
+          </div>
+          <button onClick={() => router.push('/achievements')} className="bg-white p-5 rounded-[2rem] shadow-sm border border-gray-100 text-center active:scale-95 transition-all">
+            <p className="text-xl mb-1">🎓</p>
+            <p className="text-sm font-black text-gray-800">Certificates</p>
+          </button>
+        </div>
+
+        <button 
+          onClick={() => { localStorage.clear(); router.replace("/"); }}
+          className="w-full bg-red-50 text-red-500 py-4 rounded-2xl font-black shadow-sm active:scale-95 transition-all flex items-center justify-center gap-2 text-sm"
+        >
+          Logout 🚪
+        </button>
       </div>
-      {/* --- نهاية التصميم --- */}
+
+      {/* Unified Compact Navigation Bar - كما هي بدون تغيير */}
+      <div className="fixed bottom-5 left-10 right-10 bg-white/95 backdrop-blur-md p-2 rounded-[2rem] shadow-2xl border border-gray-100 flex justify-around items-center z-50">
+        <button className="flex flex-col items-center gap-0.5 p-1">
+          <div className="bg-[#1D63ED] text-white w-12 h-12 flex items-center justify-center rounded-full shadow-lg -mt-8 border-[3px] border-gray-50 transition-all">
+            <span className="text-xl">👤</span>
+          </div>
+          <span className="text-[9px] font-black text-[#1D63ED]">Profile</span>
+        </button>
+
+        <button onClick={() => router.push('/lessons')} className="flex flex-col items-center gap-0.5 p-1 active:scale-75 transition-all">
+          <span className="text-xl opacity-60">📖</span>
+          <span className="text-[9px] font-black text-gray-400">Lessons</span>
+        </button>
+
+        <button onClick={() => router.push('/leaderboard')} className="flex flex-col items-center gap-0.5 p-1 active:scale-75 transition-all">
+          <span className="text-xl opacity-60">👑</span>
+          <span className="text-[9px] font-black text-gray-400">Leaders</span>
+        </button>
+      </div>
     </div>
   );
 }
