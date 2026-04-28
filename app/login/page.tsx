@@ -1,24 +1,25 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // 1. مسح شامل للذاكرة فور فتح الصفحة لضمان عدم وجود بيانات قديمة "عالقة"
+  // تنظيف شامل بمجرد تحميل الصفحة
   useEffect(() => {
     if (typeof window !== "undefined") {
       localStorage.clear();
-      // مسح الـ Cookies أيضاً لزيادة التأمين
-      document.cookie.split(";").forEach((c) => {
-        document.cookie = c
-          .replace(/^ +/, "")
-          .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
-      });
+      sessionStorage.clear();
+      // مسح الكوكيز لضمان عدم استرجاع أي جلسة قديمة
+      const cookies = document.cookie.split(";");
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i];
+        const eqPos = cookie.indexOf("=");
+        const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
+        document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+      }
     }
   }, []);
 
@@ -29,25 +30,22 @@ export default function LoginPage() {
 
     try {
       const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyCKjdNlxqbK8GKv3kHIH_CHFVG7xqDbycz4uEWq8Ar/exec";
-      
-      // جلب البيانات من الشيت مباشرة
       const response = await fetch(`${SCRIPT_URL}?email=${encodeURIComponent(email.trim())}`);
       const data = await response.json();
 
       if (data.status === "success") {
-        // 2. التأكيد على مسح الذاكرة مرة أخرى قبل تسجيل بيانات المستخدم الجديد
+        // مسح أخير قبل تخزين البيانات الجديدة
         localStorage.clear();
-        
-        // 3. حفظ بيانات المستخدم الجديد (النقاط القادمة من الشيت حالياً)
         localStorage.setItem("ghanem_session", JSON.stringify(data.user));
         
-        // 4. التوجه للوحة التحكم مع إجبار الصفحة على التحديث
-        window.location.href = "/dashboard";
+        // السر هنا: استخدام window.location.replace بدلاً من router.push
+        // ده بيخلي المتصفح يرمي الصفحة القديمة ببياناتها ويفتح صفحة جديدة تماماً ببيانات الطالب الجديد
+        window.location.replace("/dashboard");
       } else {
         setError("عذراً، هذا البريد غير مسجل أو البيانات غير صحيحة.");
       }
     } catch (err) {
-      setError("حدث خطأ في الاتصال، يرجى التحقق من الإنترنت والمحاولة مرة أخرى.");
+      setError("حدث خطأ في الاتصال، يرجى المحاولة مرة أخرى.");
     } finally {
       setLoading(false);
     }
@@ -69,25 +67,21 @@ export default function LoginPage() {
             <input
               type="text"
               required
-              className="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+              className="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
               placeholder="ادخل بياناتك هنا..."
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
           </div>
 
-          {error && (
-            <div className="text-red-500 text-sm bg-red-50 p-2 rounded-lg text-center">
-              {error}
-            </div>
-          )}
+          {error && <div className="text-red-500 text-sm bg-red-50 p-2 rounded-lg text-center">{error}</div>}
 
           <button
             type="submit"
             disabled={loading}
-            className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all"
+            className="w-full flex justify-center py-3 px-4 text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 transition-all"
           >
-            {loading ? "جاري التحقق من البيانات..." : "دخول الآن"}
+            {loading ? "جاري التحقق..." : "دخول الآن"}
           </button>
         </form>
       </div>
