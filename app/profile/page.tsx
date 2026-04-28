@@ -7,7 +7,7 @@ export default function ProfilePage() {
   const [name, setName] = useState("");
   const [points, setPoints] = useState(0);
 
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbznUqf35So7SKQ-ZLHWvuBV5q7zR1k9wHrtw58PTNlUvGSaqATyfAWPWvWVSjawBgRidw/exec";
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzOkcgyRQLMOwrOnwJjW95nXwkqG1vt4VO6od0iABbcPhRyaOmrzgV5zCU9MesiQikwgw/exec";
 
   useEffect(() => {
     const syncProfileData = async () => {
