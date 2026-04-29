@@ -16,7 +16,7 @@ function LessonsContent() {
   const [points, setPoints] = useState(0);
   const [photo, setPhoto] = useState("");
 
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbymOGa6W6inPbiNedqigN09JbD5cStEcYpUCYBbVRocHK64dpACl7GC0n6ujdu36aidtg/exec";
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxiYJfxkvmimqbyOCsIpCRs0jiHUj6eGQRMJtL3twD_YFscs8YOVQOPMrbrHm5XU4jqzA/exec";
 
   useEffect(() => {
     const syncData = async () => {
