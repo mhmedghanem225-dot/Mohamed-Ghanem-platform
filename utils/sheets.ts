@@ -4,7 +4,7 @@ export const updateProgressOnSheet = async (type: string, scoreValue?: number) =
   const user = JSON.parse(session);
   const identifier = user.name || user.Name;
 
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz9s8OAoeb8BWZe54jf5BGPvGXDcCtWbOZfsZ9DFCVEZH8fJTLe16UvAn7jBIAXn-mjSg/exec";
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzRCC5JAXCvyAAq4U1oG316Fx4egpN9j9xBz8Z7F4nCL8VvWgytYxladYen5OU7DFNiNQ/exec";
 
   try {
     const finalScore = type === "quiz" ? 50 : (scoreValue || 0);

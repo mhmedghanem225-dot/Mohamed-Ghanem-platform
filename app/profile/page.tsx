@@ -9,7 +9,7 @@ export default function ProfilePage() {
   const [photo, setPhoto] = useState("");
   const [isUploading, setIsUploading] = useState(false);
 
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz9s8OAoeb8BWZe54jf5BGPvGXDcCtWbOZfsZ9DFCVEZH8fJTLe16UvAn7jBIAXn-mjSg/exec";
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzRCC5JAXCvyAAq4U1oG316Fx4egpN9j9xBz8Z7F4nCL8VvWgytYxladYen5OU7DFNiNQ/exec";
 
   useEffect(() => {
     const syncProfileData = async () => {
@@ -18,19 +18,22 @@ export default function ProfilePage() {
       const userData = JSON.parse(savedSession);
       
       setName(userData.name || userData.Name);
-      // اللوجيك: عرض الصورة من التخزين المحلي فوراً لسرعة التحميل
-      setPhoto(userData.photo || "");
+      setPhoto(userData.photo || ""); 
 
       try {
         const response = await fetch(`${SCRIPT_URL}?email=${encodeURIComponent(userData.name || userData.Name)}`);
         const freshData = await response.json();
         if (freshData.status === "success") {
           setPoints(freshData.user.points || 0);
-          // اللوجيك: تحديث الصورة إذا كانت موجودة في الشيت ومختلفة عما لدينا
-          if (freshData.user.photo) {
-            setPhoto(freshData.user.photo);
-          }
-          localStorage.setItem("ghanem_session", JSON.stringify(freshData.user));
+          
+          // --- اللوجيك المحدث: حماية الصورة ---
+          // نحدث الصورة فقط إذا كانت موجودة فعلاً في السيرفر، وإلا نحتفظ بالصورة المحلية
+          const finalPhoto = freshData.user.photo || userData.photo || "";
+          setPhoto(finalPhoto);
+          
+          // تحديث الجلسة مع ضمان عدم فقدان الصورة
+          const updatedUser = { ...freshData.user, photo: finalPhoto };
+          localStorage.setItem("ghanem_session", JSON.stringify(updatedUser));
         }
       } catch (e) { console.error(e); }
     };
@@ -45,14 +48,14 @@ export default function ProfilePage() {
         const base64String = reader.result as string;
         setIsUploading(true);
 
-        // اللوجيك: تحديث الواجهة والتخزين المحلي فوراً (Optimistic UI) 
-        // عشان الصورة متختفيش لو الطالب عمل Refresh قبل ما جوجل يخلص معالجة
+        // تحديث محلي فوري (Optimistic)
         setPhoto(base64String);
         const currentSession = JSON.parse(localStorage.getItem("ghanem_session") || "{}");
         currentSession.photo = base64String;
         localStorage.setItem("ghanem_session", JSON.stringify(currentSession));
 
         try {
+          // إرسال الصورة للسيرفر
           await fetch(SCRIPT_URL, {
             method: "POST",
             mode: "no-cors", 
@@ -62,7 +65,6 @@ export default function ProfilePage() {
               photoData: base64String
             }),
           });
-          
           alert("تم حفظ صورتك بنجاح! 🌟");
         } catch (err) {
           alert("حدث خطأ أثناء الرفع.");
