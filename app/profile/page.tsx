@@ -9,7 +9,7 @@ export default function ProfilePage() {
   const [photo, setPhoto] = useState("");
   const [isUploading, setIsUploading] = useState(false);
 
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxiYJfxkvmimqbyOCsIpCRs0jiHUj6eGQRMJtL3twD_YFscs8YOVQOPMrbrHm5XU4jqzA/exec";
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzyZM6WCUve8LEkZuYwab6GBGHi129VkcT9vXyzIhGu-mFDuMBwHAwFygd-BFZcTQipcg/exec";
 
   useEffect(() => {
     const syncProfileData = async () => {

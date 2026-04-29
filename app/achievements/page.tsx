@@ -11,7 +11,7 @@ export default function AchievementsPage() {
   const [completedCount, setCompletedCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxiYJfxkvmimqbyOCsIpCRs0jiHUj6eGQRMJtL3twD_YFscs8YOVQOPMrbrHm5XU4jqzA/exec";
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzyZM6WCUve8LEkZuYwab6GBGHi129VkcT9vXyzIhGu-mFDuMBwHAwFygd-BFZcTQipcg/exec";
 
   const getEnglishGrade = (gradeText: string) => {
     if (!gradeText) return "";
