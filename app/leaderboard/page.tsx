@@ -1,31 +1,32 @@
 "use client";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function LeaderboardPage() {
+  const router = useRouter();
   const [leaders, setLeaders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzRCC5JAXCvyAAq4U1oG316Fx4egpN9j9xBz8Z7F4nCL8VvWgytYxladYen5OU7DFNiNQ/exec";
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxiYJfxkvmimqbyOCsIpCRs0jiHUj6eGQRMJtL3twD_YFscs8YOVQOPMrbrHm5XU4jqzA/exec";
 
   useEffect(() => {
     const fetchLeaders = async () => {
       try {
-        // اللوجيك: إضافة t لمنع الكاش لضمان جلب الصور الجديدة فور رفعها
+        // اللوجيك: جلب البيانات مع منع الكاش لضمان ظهور التحديثات
         const response = await fetch(`${SCRIPT_URL}?action=getLeaders&t=${Date.now()}`);
         const data = await response.json();
         
         if (data.status === "success" && data.users) {
-          // اللوجيك المحدث: 
-          // 1. استبعاد الصفوف التي لا تحتوي على اسم.
-          // 2. الترتيب التنازلي حسب النقاط.
-          // 3. ضمان أن قيمة photo نصية دائمًا لتجنب أخطاء الـ Rendering.
+          // اللوجيك المحدث:
+          // 1. فلترة الأسماء الفارغة.
+          // 2. ترتيب تنازلي حسب النقاط.
+          // 3. معالجة الصور (دعم روابط Drive وروابط Base64).
           const processedLeaders = data.users
-            .filter((u: any) => u.name || u.Name)
-            .sort((a: any, b: any) => (b.points || 0) - (a.points || 0))
+            .filter((u: any) => u.name)
+            .sort((a: any, b: any) => (parseInt(b.points) || 0) - (parseInt(a.points) || 0))
             .map((u: any) => ({
               ...u,
-              name: u.name || u.Name,
-              photo: typeof u.photo === "string" && u.photo.startsWith("data:image") ? u.photo : ""
+              photo: (typeof u.photo === "string" && u.photo.length > 10) ? u.photo : ""
             }));
 
           setLeaders(processedLeaders);
@@ -39,16 +40,14 @@ export default function LeaderboardPage() {
     fetchLeaders();
   }, []);
 
-  // اللوجيك: الصورة الافتراضية
   const defaultAvatar = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
-  
   const topThree = leaders.slice(0, 3);
   const others = leaders.slice(3);
 
   if (loading) return <div className="min-h-screen flex items-center justify-center font-black text-blue-600 animate-pulse">جاري تجهيز الأبطال... 🏆</div>;
 
   return (
-    <div className="min-h-screen bg-[#F0F7FF] pb-24 text-right px-4" dir="rtl">
+    <div className="min-h-screen bg-[#F0F7FF] pb-32 text-right px-4" dir="rtl">
       <div className="bg-white p-6 rounded-b-[3rem] shadow-sm mb-12 text-center border-b-4 border-blue-100 -mx-4">
         <h1 className="text-3xl font-black text-gray-800">Ghanem Academy Heroes 👑</h1>
       </div>
@@ -121,6 +120,24 @@ export default function LeaderboardPage() {
             <div className="text-blue-600 font-black text-xs">{s.points} pts</div>
           </div>
         ))}
+      </div>
+
+      {/* --- إضافة الـ Navigation Bar --- */}
+      <div className="fixed bottom-5 left-10 right-10 bg-white/95 backdrop-blur-md p-2 rounded-[2rem] shadow-2xl border border-gray-100 flex justify-around items-center z-50">
+        <button onClick={() => router.push('/profile')} className="flex flex-col items-center gap-0.5 p-1 active:scale-75 transition-all">
+          <span className="text-xl opacity-60">👤</span>
+          <span className="text-[9px] font-black text-gray-400">Profile</span>
+        </button>
+        <button onClick={() => router.push('/lessons')} className="flex flex-col items-center gap-0.5 p-1 active:scale-75 transition-all">
+          <span className="text-xl opacity-60">📖</span>
+          <span className="text-[9px] font-black text-gray-400">Lessons</span>
+        </button>
+        <button className="flex flex-col items-center gap-0.5 p-1 relative">
+          <div className="bg-[#1D63ED] text-white w-12 h-12 flex items-center justify-center rounded-full shadow-lg -mt-8 border-[3px] border-gray-50 transition-all">
+            <span className="text-xl">👑</span>
+          </div>
+          <span className="text-[9px] font-black text-[#1D63ED]">Leaders</span>
+        </button>
       </div>
     </div>
   );

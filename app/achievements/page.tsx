@@ -7,11 +7,11 @@ export default function AchievementsPage() {
   const [points, setPoints] = useState(0);
   const [name, setName] = useState("");
   const [grade, setGrade] = useState(""); 
+  const [photo, setPhoto] = useState(""); // لوجيك: إضافة حالة لتخزين رابط الصورة
   const [completedCount, setCompletedCount] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [isEditingName, setIsEditingName] = useState(false);
 
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzRCC5JAXCvyAAq4U1oG316Fx4egpN9j9xBz8Z7F4nCL8VvWgytYxladYen5OU7DFNiNQ/exec";
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxiYJfxkvmimqbyOCsIpCRs0jiHUj6eGQRMJtL3twD_YFscs8YOVQOPMrbrHm5XU4jqzA/exec";
 
   const getEnglishGrade = (gradeText: string) => {
     if (!gradeText) return "";
@@ -37,6 +37,7 @@ export default function AchievementsPage() {
       const identifier = userData.name || userData.Name;
       setName(identifier);
       setGrade(userData.grade || "");
+      setPhoto(userData.photo || ""); // لوجيك: استرجاع الصورة من الجلسة
 
       try {
         setLoading(true);
@@ -47,7 +48,8 @@ export default function AchievementsPage() {
           setPoints(freshData.user.points || 0);
           setCompletedCount(freshData.user.lessons || 0);
           setGrade(freshData.user.grade || userData.grade);
-          localStorage.setItem("ghanem_session", JSON.stringify(freshData.user));
+          setPhoto(freshData.user.photo || userData.photo || ""); // تحديث الصورة من السيرفر
+          localStorage.setItem("ghanem_session", JSON.stringify({ ...userData, ...freshData.user }));
         } else {
           setPoints(parseInt(localStorage.getItem("ghanem_points") || "0"));
           const completed = JSON.parse(localStorage.getItem("ghanem_completed_tasks") || "[]");
@@ -82,7 +84,6 @@ export default function AchievementsPage() {
       <p className="text-gray-500 font-bold mb-8 italic text-sm">Your journey to excellence starts here!</p>
 
       <div className="grid grid-cols-1 gap-6 max-w-md mx-auto">
-        {/* كارت النقاط */}
         <div className="bg-gradient-to-br from-[#1D63ED] to-blue-800 p-8 rounded-[2.5rem] text-white shadow-xl relative overflow-hidden">
           <p className="text-blue-100 font-bold mb-1">إجمالي رصيدك</p>
           <p className="text-5xl font-black text-[#FFEB3B]">{loading ? "..." : points}</p>
@@ -90,17 +91,13 @@ export default function AchievementsPage() {
           <div className="absolute -right-4 -bottom-4 text-9xl opacity-10">🏆</div>
         </div>
 
-        {/* قسم الشهادة */}
         <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 text-center">
           <div className="text-5xl mb-4 text-blue-600">🎓</div>
           <h3 className="text-xl font-black text-gray-800 mb-2 font-english">Certificate of Excellence</h3>
           
           {points >= 500 ? (
             <div className="space-y-4">
-              <p className="text-gray-500 text-[11px] font-bold italic">
-                مبروك! اكتب اسمك الذي تحب أن يظهر في الشهادة:
-              </p>
-              
+              <p className="text-gray-500 text-[11px] font-bold italic">مبروك! اكتب اسمك الذي تحب أن يظهر في الشهادة:</p>
               <div className="relative group">
                 <input 
                   type="text" 
@@ -110,7 +107,6 @@ export default function AchievementsPage() {
                   className="w-full p-4 rounded-xl border-2 border-blue-50 focus:border-blue-500 outline-none text-center font-bold text-gray-700 transition-all"
                 />
               </div>
-
               <div className="flex flex-col gap-3">
                 <button 
                   onClick={handleDownload} 
@@ -123,21 +119,24 @@ export default function AchievementsPage() {
             </div>
           ) : (
             <>
-              <p className="text-gray-400 text-[11px] font-bold mb-6 italic leading-relaxed">
-                Congratulations! You can now download your official certificate.
-              </p>
-              <div className="w-full bg-gray-100 text-gray-400 py-4 rounded-2xl font-black border border-dashed text-sm">
-                تحتاج {500 - points} نقطة لفتح الشهادة 🔒
-              </div>
+              <p className="text-gray-400 text-[11px] font-bold mb-6 italic leading-relaxed">Congratulations! You can now download your official certificate.</p>
+              <div className="w-full bg-gray-100 text-gray-400 py-4 rounded-2xl font-black border border-dashed text-sm">تحتاج {500 - points} نقطة لفتح الشهادة 🔒</div>
             </>
           )}
         </div>
       </div>
 
-      {/* --- الشهادة المطبوعة (تستخدم حالة الاسم الحالية) --- */}
+      {/* --- الشهادة المطبوعة (إضافة لوجيك عرض الصورة الشخصية) --- */}
       <div className="hidden print:block fixed inset-0 bg-[#FDF8F3] p-12 border-[15px] border-[#C19E61] text-center font-serif" dir="ltr">
         <div className="border-4 border-[#C19E61]/40 h-full w-full p-8 flex flex-col justify-between items-center relative bg-white/50 backdrop-blur-sm">
           
+          {/* لوجيك: إدراج صورة الطالب في الزاوية العلوية */}
+          {photo && (
+            <div className="absolute top-4 right-4 w-28 h-28 border-4 border-white shadow-lg rounded-lg overflow-hidden z-20 bg-gray-50">
+              <img src={photo} className="w-full h-full object-cover" alt="Student" />
+            </div>
+          )}
+
           <div className="text-[#C19E61]">
             <h1 className="text-6xl font-serif font-black tracking-widest mb-4">CERTIFICATE</h1>
             <h2 className="text-2xl tracking-[0.3em] font-light text-gray-500">OF EXCELLENCE</h2>
@@ -145,19 +144,13 @@ export default function AchievementsPage() {
 
           <div className="my-6">
             <p className="text-xl italic text-gray-600 mb-2">This is to certify that the student</p>
-            <p className="text-5xl font-black text-gray-900 border-b-4 border-[#C19E61] px-10 inline-block pb-2">
-              {name}
-            </p>
-            <p className="text-xl font-bold text-blue-800 mt-4 tracking-widest">
-              {grade ? `Grade: ${getEnglishGrade(grade)}` : ""}
-            </p>
+            <p className="text-5xl font-black text-gray-900 border-b-4 border-[#C19E61] px-10 inline-block pb-2">{name}</p>
+            <p className="text-xl font-bold text-blue-800 mt-4 tracking-widest">{grade ? `Grade: ${getEnglishGrade(grade)}` : ""}</p>
           </div>
 
           <div className="mb-6">
             <p className="text-lg text-gray-500 mb-2 leading-relaxed px-10">Has successfully demonstrated outstanding performance in English studies and is hereby awarded the title of</p>
-            <p className="text-3xl font-black text-[#C19E61] uppercase tracking-wider">
-               {getEnglishRank(points)}
-            </p>
+            <p className="text-3xl font-black text-[#C19E61] uppercase tracking-wider">{getEnglishRank(points)}</p>
           </div>
 
           <div className="w-full flex justify-between items-end px-12 mt-6">

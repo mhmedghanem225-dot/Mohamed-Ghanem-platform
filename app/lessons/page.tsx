@@ -16,7 +16,7 @@ function LessonsContent() {
   const [points, setPoints] = useState(0);
   const [photo, setPhoto] = useState("");
 
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzRCC5JAXCvyAAq4U1oG316Fx4egpN9j9xBz8Z7F4nCL8VvWgytYxladYen5OU7DFNiNQ/exec";
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxiYJfxkvmimqbyOCsIpCRs0jiHUj6eGQRMJtL3twD_YFscs8YOVQOPMrbrHm5XU4jqzA/exec";
 
   useEffect(() => {
     const syncData = async () => {
@@ -25,23 +25,22 @@ function LessonsContent() {
       
       const userData = JSON.parse(savedSession);
       setStudentName(userData.name || userData.Name);
-      // لوجيك: عرض الصورة المخزنة محلياً فوراً لسرعة التحميل
       setPhoto(userData.photo || "");
 
       try {
-        const response = await fetch(`${SCRIPT_URL}?email=${encodeURIComponent(userData.name || userData.Name)}`);
+        const response = await fetch(`${SCRIPT_URL}?action=getUser&email=${encodeURIComponent(userData.name || userData.Name)}`);
         const freshData = await response.json();
         
         if (freshData.status === "success") {
           setPoints(freshData.user.points || 0);
           
-          // --- اللوجيك المحدث لحماية الصورة ---
-          // نستخدم الصورة القادمة من السيرفر فقط إذا كانت موجودة، وإلا نحافظ على المحلية
+          // --- اللوجيك المحدث: معالجة رابط الصورة ---
+          // الأولوية دائماً للرابط القادم من السيرفر (سواء كان رابط Drive أو غيره)
           const finalPhoto = freshData.user.photo || userData.photo || "";
           setPhoto(finalPhoto);
           
-          // تحديث الجلسة مع ضمان دمج البيانات الجديدة بالقديمة (خاصة الصورة)
-          const updatedSession = { ...freshData.user, photo: finalPhoto };
+          // تحديث الجلسة بالبيانات الجديدة مع الحفاظ على الرابط الصحيح
+          const updatedSession = { ...userData, ...freshData.user, photo: finalPhoto };
           localStorage.setItem("ghanem_session", JSON.stringify(updatedSession));
         } else {
           setPoints(userData.points || 0);
