@@ -16,7 +16,9 @@ export default function ProfilePage() {
       const savedSession = localStorage.getItem("ghanem_session");
       if (!savedSession) { router.replace("/"); return; }
       const userData = JSON.parse(savedSession);
+      
       setName(userData.name || userData.Name);
+      // اللوجيك: عرض الصورة من التخزين المحلي فوراً لسرعة التحميل
       setPhoto(userData.photo || "");
 
       try {
@@ -24,7 +26,10 @@ export default function ProfilePage() {
         const freshData = await response.json();
         if (freshData.status === "success") {
           setPoints(freshData.user.points || 0);
-          setPhoto(freshData.user.photo || "");
+          // اللوجيك: تحديث الصورة إذا كانت موجودة في الشيت ومختلفة عما لدينا
+          if (freshData.user.photo) {
+            setPhoto(freshData.user.photo);
+          }
           localStorage.setItem("ghanem_session", JSON.stringify(freshData.user));
         }
       } catch (e) { console.error(e); }
@@ -39,10 +44,18 @@ export default function ProfilePage() {
       reader.onloadend = async () => {
         const base64String = reader.result as string;
         setIsUploading(true);
+
+        // اللوجيك: تحديث الواجهة والتخزين المحلي فوراً (Optimistic UI) 
+        // عشان الصورة متختفيش لو الطالب عمل Refresh قبل ما جوجل يخلص معالجة
+        setPhoto(base64String);
+        const currentSession = JSON.parse(localStorage.getItem("ghanem_session") || "{}");
+        currentSession.photo = base64String;
+        localStorage.setItem("ghanem_session", JSON.stringify(currentSession));
+
         try {
-          const response = await fetch(SCRIPT_URL, {
+          await fetch(SCRIPT_URL, {
             method: "POST",
-            mode: "no-cors", // لضمان تجاوز مشاكل الحماية مع جوجل
+            mode: "no-cors", 
             body: JSON.stringify({
               action: "uploadPhoto",
               email: name,
@@ -50,11 +63,6 @@ export default function ProfilePage() {
             }),
           });
           
-          // في وضع no-cors لا يمكن قراءة الرد، لذا نحدث محلياً
-          setPhoto(base64String);
-          const savedSession = JSON.parse(localStorage.getItem("ghanem_session") || "{}");
-          savedSession.photo = base64String;
-          localStorage.setItem("ghanem_session", JSON.stringify(savedSession));
           alert("تم حفظ صورتك بنجاح! 🌟");
         } catch (err) {
           alert("حدث خطأ أثناء الرفع.");
@@ -73,7 +81,7 @@ export default function ProfilePage() {
         <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-100 text-center mb-6">
           <div className="relative w-24 h-24 mx-auto mb-4">
             <div className="w-full h-full bg-blue-100 rounded-full overflow-hidden flex items-center justify-center text-3xl shadow-inner border-2 border-white">
-              {photo ? <img src={photo} className="w-full h-full object-cover" /> : "👤"}
+              {photo ? <img src={photo} className="w-full h-full object-cover" alt="Profile" /> : "👤"}
             </div>
             <label className="absolute bottom-0 right-0 bg-[#1D63ED] text-white w-8 h-8 rounded-full flex items-center justify-center cursor-pointer shadow-lg border-2 border-white active:scale-90 transition-all">
               <span className="text-sm">📸</span>
@@ -84,6 +92,7 @@ export default function ProfilePage() {
           <h2 className="text-lg font-black text-gray-800">{name}</h2>
           <p className="text-blue-600 font-bold text-sm">Ghanem Academy Hero</p>
         </div>
+
         <div className="grid grid-cols-2 gap-4 mb-6">
           <div className="bg-white p-5 rounded-[2rem] shadow-sm border border-gray-100 text-center">
             <p className="text-xl mb-1">🏆</p>
@@ -95,12 +104,25 @@ export default function ProfilePage() {
             <p className="text-sm font-black text-gray-800">Certificates</p>
           </button>
         </div>
+
         <button onClick={() => { localStorage.clear(); router.replace("/"); }} className="w-full bg-red-50 text-red-500 py-4 rounded-2xl font-black shadow-sm active:scale-95 transition-all flex items-center justify-center gap-2 text-sm">Logout 🚪</button>
       </div>
+
       <div className="fixed bottom-5 left-10 right-10 bg-white/95 backdrop-blur-md p-2 rounded-[2rem] shadow-2xl border border-gray-100 flex justify-around items-center z-50">
-        <button className="flex flex-col items-center gap-0.5 p-1"><div className="bg-[#1D63ED] text-white w-12 h-12 flex items-center justify-center rounded-full shadow-lg -mt-8 border-[3px] border-gray-50"><span className="text-xl">👤</span></div><span className="text-[9px] font-black text-[#1D63ED]">Profile</span></button>
-        <button onClick={() => router.push('/lessons')} className="flex flex-col items-center gap-0.5 p-1 active:scale-75"><span className="text-xl opacity-60">📖</span><span className="text-[9px] font-black text-gray-400">Lessons</span></button>
-        <button onClick={() => router.push('/leaderboard')} className="flex flex-col items-center gap-0.5 p-1 active:scale-75"><span className="text-xl opacity-60">👑</span><span className="text-[9px] font-black text-gray-400">Leaders</span></button>
+        <button className="flex flex-col items-center gap-0.5 p-1">
+          <div className="bg-[#1D63ED] text-white w-12 h-12 flex items-center justify-center rounded-full shadow-lg -mt-8 border-[3px] border-gray-50">
+            <span className="text-xl">👤</span>
+          </div>
+          <span className="text-[9px] font-black text-[#1D63ED]">Profile</span>
+        </button>
+        <button onClick={() => router.push('/lessons')} className="flex flex-col items-center gap-0.5 p-1 active:scale-75 transition-all">
+          <span className="text-xl opacity-60">📖</span>
+          <span className="text-[9px] font-black text-gray-400">Lessons</span>
+        </button>
+        <button onClick={() => router.push('/leaderboard')} className="flex flex-col items-center gap-0.5 p-1 active:scale-75 transition-all">
+          <span className="text-xl opacity-60">👑</span>
+          <span className="text-[9px] font-black text-gray-400">Leaders</span>
+        </button>
       </div>
     </div>
   );

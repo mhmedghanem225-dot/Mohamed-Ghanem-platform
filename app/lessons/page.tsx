@@ -14,6 +14,8 @@ function LessonsContent() {
   const [loading, setLoading] = useState(true);
   const [studentName, setStudentName] = useState("");
   const [points, setPoints] = useState(0);
+  // --- لوجيك إضافي للصورة ---
+  const [photo, setPhoto] = useState("");
 
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz9s8OAoeb8BWZe54jf5BGPvGXDcCtWbOZfsZ9DFCVEZH8fJTLe16UvAn7jBIAXn-mjSg/exec";
 
@@ -24,13 +26,17 @@ function LessonsContent() {
       
       const userData = JSON.parse(savedSession);
       setStudentName(userData.name || userData.Name);
+      // جلب الصورة من الـ session المحلي أولاً لضمان سرعة الظهور
+      setPhoto(userData.photo || "");
 
-      // جلب أحدث نقاط من الشيت فور فتح الصفحة
+      // جلب أحدث بيانات (نقاط + صورة) من الشيت
       try {
         const response = await fetch(`${SCRIPT_URL}?email=${encodeURIComponent(userData.name || userData.Name)}`);
         const freshData = await response.json();
         if (freshData.status === "success") {
           setPoints(freshData.user.points || 0);
+          // تحديث الصورة من السيرفر في حال تغيرت
+          setPhoto(freshData.user.photo || "");
           localStorage.setItem("ghanem_session", JSON.stringify(freshData.user));
         } else {
           setPoints(userData.points || 0);
@@ -100,7 +106,10 @@ function LessonsContent() {
     <div className="min-h-screen bg-gray-50 pb-32" dir="rtl">
       <div className="bg-[#1D63ED] pt-8 pb-16 px-6 rounded-b-[3rem] shadow-xl relative overflow-hidden text-right">
         <div className="flex justify-between items-center relative z-10 mb-4">
-          <button onClick={() => router.push('/profile')} className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-lg border border-white/30 active:scale-90 transition-all">👤</button>
+          {/* تعديل لوجيك عرض الصورة في زر البروفايل */}
+          <button onClick={() => router.push('/profile')} className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-lg border border-white/30 active:scale-90 transition-all overflow-hidden">
+            {photo ? <img src={photo} className="w-full h-full object-cover" /> : "👤"}
+          </button>
           <div className="w-10 h-10 bg-white rounded-full p-1 shadow-lg border-2 border-blue-400 overflow-hidden">
             <Image src="/logo.png" alt="Logo" width={40} height={40} className="rounded-full object-contain" priority />
           </div>
