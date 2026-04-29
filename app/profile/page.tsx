@@ -26,7 +26,6 @@ export default function ProfilePage() {
         if (freshData.status === "success") {
           setPoints(freshData.user.points || 0);
           
-          // اللوجيك: تحديث الصورة من السيرفر (رابط Drive) أو البقاء على المحلية
           const finalPhoto = freshData.user.photo || userData.photo || "";
           setPhoto(finalPhoto);
           
@@ -38,47 +37,75 @@ export default function ProfilePage() {
     syncProfileData();
   }, [router]);
 
-  const handlePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  // ✅ الجزء المعدل فقط
+  const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const base64String = reader.result as string;
-        setIsUploading(true);
+    if (!file) return;
 
-        try {
-          // اللوجيك الجديد: إرسال الصورة والحصول على رابط Drive المباشر
-          const response = await fetch(SCRIPT_URL, {
-            method: "POST",
-            body: JSON.stringify({
-              action: "uploadPhoto",
-              email: name,
-              photoData: base64String
-            }),
-          });
-          
-          const result = await response.json();
+    // ✅ التحقق من النوع
+    if (!file.type.startsWith("image/")) {
+      alert("من فضلك اختر صورة صحيحة");
+      return;
+    }
 
-          if (result.status === "success") {
-            const driveUrl = result.url; // الرابط القادم من Google Drive
-            
-            // تحديث الحالة المحلية والجلسة بالرابط الجديد
-            setPhoto(driveUrl);
-            const currentSession = JSON.parse(localStorage.getItem("ghanem_session") || "{}");
-            currentSession.photo = driveUrl;
-            localStorage.setItem("ghanem_session", JSON.stringify(currentSession));
-            
-            alert("تم حفظ صورتك بنجاح على السيرفر! 🌟");
-          }
-        } catch (err) {
-          // في حال فشل fetch (بسبب no-cors)، نظهر الصورة محلياً كاحتياط
-          setPhoto(base64String); 
-          alert("تم إرسال الصورة بنجاح! قد يستغرق ظهورها للآخرين ثوانٍ.");
-        } finally {
-          setIsUploading(false);
-        }
+    setIsUploading(true);
+
+    try {
+      // ✅ ضغط الصورة
+      const compressImage = (file: File): Promise<string> => {
+        return new Promise((resolve) => {
+          const img = new Image();
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d");
+
+          img.onload = () => {
+            const size = 300;
+            canvas.width = size;
+            canvas.height = size;
+
+            ctx?.drawImage(img, 0, 0, size, size);
+
+            const compressed = canvas.toDataURL("image/jpeg", 0.7);
+            resolve(compressed);
+          };
+
+          img.src = URL.createObjectURL(file);
+        });
       };
-      reader.readAsDataURL(file);
+
+      const base64String = await compressImage(file);
+
+      // ✅ إرسال الصورة للسيرفر
+      const response = await fetch(SCRIPT_URL, {
+        method: "POST",
+        body: JSON.stringify({
+          action: "uploadPhoto",
+          email: name,
+          photoData: base64String
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.status === "success") {
+        const driveUrl = result.url;
+
+        setPhoto(driveUrl);
+
+        const currentSession = JSON.parse(localStorage.getItem("ghanem_session") || "{}");
+        currentSession.photo = driveUrl;
+        localStorage.setItem("ghanem_session", JSON.stringify(currentSession));
+
+        alert("تم حفظ صورتك بنجاح على السيرفر! 🌟");
+      } else {
+        throw new Error(result.message || "Upload failed");
+      }
+
+    } catch (err) {
+      console.error(err);
+      alert("حدث خطأ أثناء رفع الصورة");
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -116,7 +143,6 @@ export default function ProfilePage() {
         <button onClick={() => { localStorage.clear(); router.replace("/"); }} className="w-full bg-red-50 text-red-500 py-4 rounded-2xl font-black shadow-sm active:scale-95 transition-all flex items-center justify-center gap-2 text-sm">Logout 🚪</button>
       </div>
 
-      {/* Navigation Bar */}
       <div className="fixed bottom-5 left-10 right-10 bg-white/95 backdrop-blur-md p-2 rounded-[2rem] shadow-2xl border border-gray-100 flex justify-around items-center z-50">
         <button className="flex flex-col items-center gap-0.5 p-1">
           <div className="bg-[#1D63ED] text-white w-12 h-12 flex items-center justify-center rounded-full shadow-lg -mt-8 border-[3px] border-gray-50">
