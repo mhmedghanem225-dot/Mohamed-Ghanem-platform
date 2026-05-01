@@ -1,7 +1,7 @@
 "use client";
 import { useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useState, useCallback, useRef } from "react";
 import { updateProgressOnSheet } from "../../utils/sheets";
 
 function LessonsContent() {
@@ -16,56 +16,11 @@ function LessonsContent() {
   const [points, setPoints] = useState(0);
   const [photo, setPhoto] = useState("");
 
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwouhuaEnKJKsX8FNEMwe6XWPVV6LEUBTPnYtuPag6-01v34fy8-XuELqQcUJj2OX989g/exec";
+  const initialized = useRef(false);
 
-  useEffect(() => {
-    const syncData = async () => {
-      const savedSession = localStorage.getItem("ghanem_session");
-      if (!savedSession) { router.replace("/"); return; }
-      
-      const userData = JSON.parse(savedSession);
-      setStudentName(userData.name || userData.Name);
-      setPhoto(userData.photo || "");
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzKI4vf-z-DPZ1kzu4Gw3_PZjQIGr_vINjlz6ZMIym-6ISxSIqJG54vJ-MJZpsNy86Uww/exec";
 
-      try {
-        const response = await fetch(`${SCRIPT_URL}?action=getUser&email=${encodeURIComponent(userData.name || userData.Name)}`);
-        const freshData = await response.json();
-        
-        if (freshData.status === "success") {
-          setPoints(freshData.user.points || 0);
-          
-          // --- اللوجيك المحدث: معالجة رابط الصورة ---
-          // الأولوية دائماً للرابط القادم من السيرفر (سواء كان رابط Drive أو غيره)
-          const finalPhoto = freshData.user.photo || userData.photo || "";
-          setPhoto(finalPhoto);
-          
-          // تحديث الجلسة بالبيانات الجديدة مع الحفاظ على الرابط الصحيح
-          const updatedSession = { ...userData, ...freshData.user, photo: finalPhoto };
-          localStorage.setItem("ghanem_session", JSON.stringify(updatedSession));
-        } else {
-          setPoints(userData.points || 0);
-        }
-      } catch (e) {
-        setPoints(userData.points || 0);
-      }
-
-      const gradeFromURL = searchParams.get("grade");
-      const lastSavedGrade = localStorage.getItem("last_grade");
-      const currentGrade = gradeFromURL || lastSavedGrade || "";
-      
-      if (currentGrade) {
-        setGrade(currentGrade);
-        localStorage.setItem("last_grade", currentGrade);
-        fetchLessons(currentGrade);
-      } else {
-        setLoading(false);
-      }
-    };
-
-    syncData();
-  }, [searchParams, router]);
-
-  const fetchLessons = async (targetGrade: string) => {
+  const fetchLessons = useCallback(async (targetGrade: string) => {
     try {
       setLoading(true);
       const res = await fetch(`https://docs.google.com/spreadsheets/d/e/2PACX-1vQ-ZJwP0z4SVM4XfAPevqPqsSvbSBRy18i_rbgfVNGYVHBZj10aHtdHqhMj8kKKkI0WHwWLDLFxXniO/pub?output=csv&t=${Date.now()}`);
@@ -73,7 +28,7 @@ function LessonsContent() {
       const rows = data.split(/\r?\n/).filter(line => line.trim() !== "");
       
       const filtered = rows.slice(1).map(row => {
-        const r = row.split(",");
+        const r = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
         const unitName = r[r.length - 1]?.replace(/"/g, '').trim() || "General Lessons";
         return { 
           grade: r[0]?.trim(), 
@@ -94,8 +49,66 @@ function LessonsContent() {
 
       setUnits(grouped);
       setLoading(false);
-    } catch (e) { setLoading(false); }
-  };
+    } catch (e) { 
+      setLoading(false); 
+    }
+  }, []);
+
+  useEffect(() => {
+    if (initialized.current) return;
+
+    const syncData = async () => {
+      const savedSession = localStorage.getItem("ghanem_session");
+      if (!savedSession) { 
+        router.replace("/"); 
+        return; 
+      }
+
+      let deviceId = localStorage.getItem("ghanem_device_id");
+      if (!deviceId) {
+        deviceId = "dev_" + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem("ghanem_device_id", deviceId);
+      }
+      
+      initialized.current = true;
+
+      const userData = JSON.parse(savedSession);
+      const email = userData.name || userData.Name;
+      setStudentName(email);
+      setPhoto(userData.photo || "");
+
+      try {
+        const response = await fetch(`${SCRIPT_URL}?action=getUser&email=${encodeURIComponent(email)}&deviceId=${deviceId}`);
+        const freshData = await response.json();
+        
+        if (freshData.status === "success") {
+          setPoints(freshData.user.points || 0);
+          setPhoto(freshData.user.photo || userData.photo || "");
+          localStorage.setItem("ghanem_session", JSON.stringify({ ...userData, ...freshData.user }));
+        } else if (freshData.message === "logged_elsewhere") {
+          localStorage.removeItem("ghanem_session");
+          router.replace("/");
+          return;
+        }
+      } catch (e) {
+        setPoints(userData.points || 0);
+      }
+
+      const gradeFromURL = searchParams.get("grade");
+      const lastSavedGrade = localStorage.getItem("last_grade");
+      const currentGrade = gradeFromURL || lastSavedGrade || userData.grade || "";
+      
+      if (currentGrade) {
+        setGrade(currentGrade);
+        localStorage.setItem("last_grade", currentGrade);
+        await fetchLessons(currentGrade);
+      } else {
+        setLoading(false);
+      }
+    };
+
+    syncData();
+  }, [searchParams, router, fetchLessons]);
 
   const toggleUnit = (unitName: string) => {
     setOpenUnits(prev => ({ ...prev, [unitName]: !prev[unitName] }));
@@ -108,15 +121,31 @@ function LessonsContent() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-32" dir="rtl">
+      {/* الجزء الأزرق العلوي المعدل */}
       <div className="bg-[#1D63ED] pt-8 pb-16 px-6 rounded-b-[3rem] shadow-xl relative overflow-hidden text-right">
-        <div className="flex justify-between items-center relative z-10 mb-4">
+        
+        {/* الصف العلوي: البروفايل، زر الممارسة، واللوجو */}
+        <div className="flex justify-between items-center relative z-10 mb-6">
           <button onClick={() => router.push('/profile')} className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-lg border border-white/30 active:scale-90 transition-all overflow-hidden">
             {photo ? <img src={photo} className="w-full h-full object-cover" alt="Profile" /> : "👤"}
           </button>
+
+          {/* زر الممارسة الجديد - بشكل جذاب ومناسب للموبايل */}
+          <button 
+            onClick={() => router.push('/practice')} // تأكد من أن المسار "/practice" هو الصحيح لصفحة الممارسة لديك
+            className="flex items-center gap-2 bg-gradient-to-r from-yellow-400 to-orange-400 px-4 py-2 rounded-2xl shadow-lg border border-white/30 active:scale-95 transition-all animate-bounce-slow"
+            style={{ animation: 'pulse 2s infinite' }}
+          >
+            <span className="text-lg">🎙️</span>
+            <span className="text-[11px] font-black text-blue-900">Speak Now</span>
+          </button>
+
           <div className="w-10 h-10 bg-white rounded-full p-1 shadow-lg border-2 border-blue-400 overflow-hidden">
             <Image src="/logo.png" alt="Logo" width={40} height={40} className="rounded-full object-contain" priority />
           </div>
         </div>
+
+        {/* الصف السفلي: الترحيب والنقاط */}
         <div className="relative z-10 text-white flex justify-between items-end">
           <div className="text-right">
             <p className="text-blue-100 font-bold text-xs mb-1">Welcome, {studentName} 👋</p>
@@ -188,6 +217,15 @@ function LessonsContent() {
           <span className="text-[9px] font-black text-gray-400">Leaders</span>
         </button>
       </div>
+      
+      {/* إضافة انيميشن بسيط للزرار لزيادة الجاذبية */}
+      <style jsx>{`
+        @keyframes pulse {
+          0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 235, 59, 0.4); }
+          70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(255, 235, 59, 0); }
+          100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 235, 59, 0); }
+        }
+      `}</style>
     </div>
   );
 }
