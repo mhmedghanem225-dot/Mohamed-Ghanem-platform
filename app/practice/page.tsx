@@ -38,7 +38,7 @@ export default function ConversationPractice() {
   const [isPlayingModel, setIsPlayingModel] = useState(false);
   const [fluencyScore, setFluencyScore] = useState(0);
 
-  // --- 1. قاعدة بيانات المحادثات لجميع المواضيع ---
+  // --- 1. قاعدة بيانات المحادثات ---
   const generateConversation = (topic: string) => {
     const baseDialogues: Record<string, string[]> = {
       "Daily Routine": ["A: What time do you usually wake up?", "B: I wake up at 7 AM every day.", "A: That is early! Do you eat breakfast?", "B: Yes, I usually have eggs and toast.", "A: What do you do after?", "B: I go to work by bus."],
@@ -83,13 +83,13 @@ export default function ConversationPractice() {
       }
       
       utterance.lang = "en-US";
-      utterance.rate = 0.85;
-      utterance.onend = () => setTimeout(resolve, 800);
+      utterance.rate = 0.9;
+      utterance.onend = () => setTimeout(resolve, 600);
       window.speechSynthesis.speak(utterance);
     });
   };
 
-  // --- 3. وظيفة الاستماع للمحادثة كاملة ---
+  // --- 3. تشغيل النموذج بالكامل ---
   const playFullModel = async () => {
     setIsPlayingModel(true);
     for (let i = 0; i < dialogue.length; i++) {
@@ -100,13 +100,17 @@ export default function ConversationPractice() {
     setCurrentLineIndex(-1);
   };
 
-  // --- 4. محرك التعرف على الصوت (STT) ---
+  // --- 4. التعرف على الصوت (STT) ---
   const startListening = () => {
     return new Promise((resolve) => {
       const Recognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (!Recognition) {
+        alert("Speech recognition is not supported in this browser.");
+        resolve(true);
+        return;
+      }
       const rec = new Recognition();
       rec.lang = "en-US";
-      
       rec.onstart = () => setIsListening(true);
       rec.onresult = () => setFluencyScore(prev => Math.min(prev + 6, 100));
       rec.onend = () => {
@@ -117,19 +121,17 @@ export default function ConversationPractice() {
     });
   };
 
-  // --- 5. حلقة الممارسة التلقائية ---
+  // --- 5. حلقة الممارسة ---
   const runPracticeLoop = async (index: number) => {
     if (index >= dialogue.length) {
       setStep("result");
       return;
     }
-
     setCurrentLineIndex(index);
     const line = dialogue[index];
-
     if (line.speaker === userRole) {
       await startListening();
-      setTimeout(() => runPracticeLoop(index + 1), 500);
+      setTimeout(() => runPracticeLoop(index + 1), 400);
     } else {
       await playAudio(line.text, line.speaker);
       runPracticeLoop(index + 1);
@@ -137,50 +139,51 @@ export default function ConversationPractice() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F0F4F8] text-slate-900 font-sans pb-20" dir="ltr">
-      {/* Header */}
-      <header className="bg-[#1E293B] text-white p-12 shadow-2xl text-center rounded-b-[5rem] border-b-8 border-blue-500">
-        <h1 className="text-5xl font-black tracking-tighter">GHANEM ACADEMY</h1>
-        <p className="mt-3 text-blue-300 text-xl font-light">The Future of English Learning</p>
+    <div className="min-h-screen bg-[#F0F4F8] text-slate-900 font-sans pb-10 overflow-x-hidden" dir="ltr">
+      {/* Header - Optimized for Mobile height */}
+      <header className="bg-[#1E293B] text-white p-6 md:p-12 shadow-xl text-center rounded-b-[2.5rem] md:rounded-b-[5rem] border-b-4 md:border-b-8 border-blue-500">
+        <h1 className="text-2xl md:text-5xl font-black tracking-tight">GHANEM ACADEMY</h1>
+        <p className="mt-1 text-blue-300 text-sm md:text-xl font-light">The Future of English Learning</p>
       </header>
 
-      <main className="max-w-4xl mx-auto mt-12 px-6">
-        {/* Step 1: Topics List */}
+      <main className="max-w-4xl mx-auto mt-6 md:mt-12 px-4 md:px-6">
+        
+        {/* Step 1: Topics List - Grid optimized for mobile */}
         {step === "list" && (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6">
             {TOPICS.map((t) => (
               <button 
                 key={t.id} 
                 onClick={() => { setSelectedTopic(t.title); generateConversation(t.title); setStep("listen"); }}
-                className="bg-white p-8 rounded-[2.5rem] shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all border-b-4 border-slate-200 active:scale-95"
+                className="bg-white p-4 md:p-8 rounded-2xl md:rounded-[2.5rem] shadow-md hover:shadow-xl transition-all border-b-2 md:border-b-4 border-slate-200 active:scale-95 text-center"
               >
-                <span className="text-5xl block mb-4">{t.icon}</span>
-                <span className="font-black text-slate-700 text-lg">{t.title}</span>
+                <span className="text-3xl md:text-5xl block mb-2 md:mb-4">{t.icon}</span>
+                <span className="font-bold text-slate-700 text-sm md:text-lg">{t.title}</span>
               </button>
             ))}
           </div>
         )}
 
-        {/* Step 2: Listening (The Model) */}
+        {/* Step 2: Listening Phase */}
         {step === "listen" && (
-          <div className="bg-white rounded-[3rem] p-10 shadow-2xl">
-            <div className="flex justify-between items-center mb-10">
-              <h2 className="text-3xl font-black text-slate-800">Topic: {selectedTopic}</h2>
+          <div className="bg-white rounded-3xl md:rounded-[3rem] p-5 md:p-10 shadow-xl">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6 md:mb-10">
+              <h2 className="text-xl md:text-3xl font-black text-slate-800 text-center md:text-left">Topic: {selectedTopic}</h2>
               <button 
                 onClick={playFullModel}
                 disabled={isPlayingModel}
-                className={`flex items-center gap-2 px-6 py-3 rounded-full font-bold transition-all ${isPlayingModel ? "bg-slate-100 text-slate-400" : "bg-blue-600 text-white shadow-lg hover:bg-blue-700"}`}
+                className={`w-full md:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-full font-bold transition-all ${isPlayingModel ? "bg-slate-100 text-slate-400" : "bg-blue-600 text-white shadow-lg"}`}
               >
                 {isPlayingModel ? "🔊 Playing..." : "▶️ Play All"}
               </button>
             </div>
 
-            <div className="space-y-6 mb-12">
+            <div className="space-y-4 md:space-y-6 mb-8 md:mb-12">
               {dialogue.map((line, i) => (
                 <div key={i} className={`flex ${line.speaker === "A" ? "justify-start" : "justify-end"}`}>
-                  <div className={`relative max-w-[80%] p-6 rounded-[2rem] transition-all duration-300 ${i === currentLineIndex ? "ring-4 ring-blue-400 scale-105 shadow-xl" : "opacity-80"} ${line.speaker === "A" ? "bg-blue-50 text-blue-900 rounded-tl-none" : "bg-emerald-50 text-emerald-900 rounded-tr-none"}`}>
-                    <p className="text-[10px] font-black uppercase opacity-40 mb-1">{line.speaker === "A" ? "Male Voice" : "Female Voice"}</p>
-                    <p className="text-xl font-medium">{line.text}</p>
+                  <div className={`relative max-w-[90%] md:max-w-[80%] p-4 md:p-6 rounded-2xl md:rounded-[2rem] transition-all duration-300 ${i === currentLineIndex ? "ring-2 md:ring-4 ring-blue-400 scale-[1.02]" : "opacity-80"} ${line.speaker === "A" ? "bg-blue-50 text-blue-900 rounded-tl-none" : "bg-emerald-50 text-emerald-900 rounded-tr-none"}`}>
+                    <p className="text-[9px] font-black uppercase opacity-40 mb-1">{line.speaker === "A" ? "Male Voice" : "Female Voice"}</p>
+                    <p className="text-base md:text-xl font-medium leading-tight">{line.text}</p>
                   </div>
                 </div>
               ))}
@@ -188,31 +191,31 @@ export default function ConversationPractice() {
 
             <button 
               onClick={() => { setStep("role"); setCurrentLineIndex(-1); window.speechSynthesis.cancel(); }}
-              className="w-full bg-slate-900 text-white py-6 rounded-[2rem] font-black text-2xl shadow-xl hover:bg-black transition-all"
+              className="w-full bg-slate-900 text-white py-4 md:py-6 rounded-2xl md:rounded-[2rem] font-black text-lg md:text-2xl shadow-xl hover:bg-black transition-all"
             >
-              I'm Ready to Practice! 🎤
+              I'm Ready! 🎤
             </button>
           </div>
         )}
 
-        {/* Step 3: Pick Role */}
+        {/* Step 3: Pick Role - Optimized for thumb tapping */}
         {step === "role" && (
-          <div className="text-center py-10">
-            <h2 className="text-4xl font-black text-slate-800 mb-12 italic">Choose your character:</h2>
-            <div className="flex gap-10 justify-center">
+          <div className="text-center py-6">
+            <h2 className="text-2xl md:text-4xl font-black text-slate-800 mb-8 italic">Choose character:</h2>
+            <div className="flex flex-row gap-4 md:gap-10 justify-center">
               <button 
                 onClick={() => { setUserRole("A"); setStep("practice"); }}
-                className="group w-56 h-64 bg-white rounded-[3rem] border-4 border-blue-400 shadow-2xl hover:bg-blue-50 transition-all flex flex-col items-center justify-center gap-4"
+                className="flex-1 max-w-[160px] md:w-56 h-48 md:h-64 bg-white rounded-3xl md:rounded-[3rem] border-2 md:border-4 border-blue-400 shadow-xl flex flex-col items-center justify-center gap-2 md:gap-4 active:bg-blue-50"
               >
-                <span className="text-8xl group-hover:scale-110 transition-transform">👨</span>
-                <span className="font-black text-blue-700 text-xl tracking-widest">SPEAKER A</span>
+                <span className="text-5xl md:text-8xl">👨</span>
+                <span className="font-black text-blue-700 text-sm md:text-xl tracking-tighter md:tracking-widest">SPEAKER A</span>
               </button>
               <button 
                 onClick={() => { setUserRole("B"); setStep("practice"); }}
-                className="group w-56 h-64 bg-white rounded-[3rem] border-4 border-emerald-400 shadow-2xl hover:bg-emerald-50 transition-all flex flex-col items-center justify-center gap-4"
+                className="flex-1 max-w-[160px] md:w-56 h-48 md:h-64 bg-white rounded-3xl md:rounded-[3rem] border-2 md:border-4 border-emerald-400 shadow-xl flex flex-col items-center justify-center gap-2 md:gap-4 active:bg-emerald-50"
               >
-                <span className="text-8xl group-hover:scale-110 transition-transform">👩</span>
-                <span className="font-black text-emerald-700 text-xl tracking-widest">SPEAKER B</span>
+                <span className="text-5xl md:text-8xl">👩</span>
+                <span className="font-black text-emerald-700 text-sm md:text-xl tracking-tighter md:tracking-widest">SPEAKER B</span>
               </button>
             </div>
           </div>
@@ -220,20 +223,20 @@ export default function ConversationPractice() {
 
         {/* Step 4: Practice Phase */}
         {step === "practice" && (
-          <div className="space-y-8">
+          <div className="space-y-4 md:space-y-8">
             {currentLineIndex === -1 && (
-              <div className="bg-white p-12 rounded-[4rem] text-center shadow-2xl border-4 border-dashed border-blue-200">
-                <p className="text-2xl font-bold text-slate-600 mb-8">Click start to begin the conversation</p>
+              <div className="bg-white p-8 md:p-12 rounded-3xl md:rounded-[4rem] text-center shadow-xl border-2 md:border-4 border-dashed border-blue-200">
+                <p className="text-lg md:text-2xl font-bold text-slate-600 mb-6 md:mb-8">Ready to start?</p>
                 <button 
                   onClick={() => runPracticeLoop(0)}
-                  className="bg-blue-600 text-white px-20 py-5 rounded-full font-black text-2xl shadow-2xl hover:scale-105 active:scale-95 transition-all"
+                  className="bg-blue-600 text-white px-10 md:px-20 py-4 md:py-5 rounded-full font-black text-xl md:text-2xl shadow-xl active:scale-95"
                 >
                   START NOW
                 </button>
               </div>
             )}
 
-            <div className="space-y-6">
+            <div className="space-y-4">
               {dialogue.map((line, i) => {
                 if (i > currentLineIndex && currentLineIndex !== -1) return null;
                 const isActive = i === currentLineIndex;
@@ -242,24 +245,24 @@ export default function ConversationPractice() {
                 return (
                   <div 
                     key={i} 
-                    className={`p-8 rounded-[2.5rem] transition-all duration-500 shadow-lg ${
-                      isActive ? "bg-white ring-4 ring-blue-500 scale-105" : "bg-slate-100 opacity-40 scale-95"
+                    className={`p-5 md:p-8 rounded-2xl md:rounded-[2.5rem] transition-all duration-500 shadow-md ${
+                      isActive ? "bg-white ring-2 md:ring-4 ring-blue-500 scale-[1.02]" : "bg-slate-100 opacity-40 scale-[0.98]"
                     }`}
                   >
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className={`w-3 h-3 rounded-full ${isUser ? "bg-emerald-500 animate-pulse" : "bg-blue-500"}`}></div>
-                      <span className="text-xs font-black text-slate-400 uppercase tracking-widest">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className={`w-2 h-2 rounded-full ${isUser ? "bg-emerald-500 animate-pulse" : "bg-blue-500"}`}></div>
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
                         {isUser ? "Your Turn" : "AI Partner"}
                       </span>
                     </div>
-                    <p className="text-2xl font-bold text-slate-800 leading-tight">{line.text}</p>
+                    <p className="text-lg md:text-2xl font-bold text-slate-800 leading-snug">{line.text}</p>
                     {isActive && isListening && (
-                      <div className="mt-4 text-emerald-600 font-black italic flex items-center gap-2">
-                         <span className="flex h-3 w-3 relative">
+                      <div className="mt-3 text-emerald-600 font-black text-xs md:text-sm italic flex items-center gap-2">
+                         <span className="flex h-2 w-2 relative">
                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                         </span>
-                        RECORDING... TALK NOW!
+                        RECORDING... SPEAK NOW!
                       </div>
                     )}
                   </div>
@@ -269,27 +272,27 @@ export default function ConversationPractice() {
           </div>
         )}
 
-        {/* Step 5: Result Page */}
+        {/* Step 5: Result Page - Compact for mobile */}
         {step === "result" && (
-          <div className="bg-white rounded-[4rem] p-16 shadow-2xl text-center border-t-8 border-orange-400">
-            <div className="text-9xl mb-8">🏆</div>
-            <h2 className="text-5xl font-black text-slate-900 mb-4">Brilliant!</h2>
-            <p className="text-slate-500 text-xl mb-12">You've mastered the "{selectedTopic}" conversation.</p>
+          <div className="bg-white rounded-3xl md:rounded-[4rem] p-8 md:p-16 shadow-xl text-center border-t-4 md:border-t-8 border-orange-400">
+            <div className="text-6xl md:text-9xl mb-4 md:mb-8">🏆</div>
+            <h2 className="text-3xl md:text-5xl font-black text-slate-900 mb-2">Brilliant!</h2>
+            <p className="text-slate-500 text-sm md:text-xl mb-8 md:mb-12">You've mastered "{selectedTopic}"</p>
             
-            <div className="flex gap-8 justify-center mb-12">
-              <div className="bg-orange-50 px-10 py-8 rounded-[3rem] border-2 border-orange-100">
-                <p className="text-orange-600 font-black text-sm uppercase mb-2">Fluency</p>
-                <p className="text-5xl font-black text-orange-700">{fluencyScore}%</p>
+            <div className="flex gap-4 justify-center mb-8 md:mb-12">
+              <div className="bg-orange-50 px-6 py-4 md:px-10 md:py-8 rounded-2xl md:rounded-[3rem] border-2 border-orange-100">
+                <p className="text-orange-600 font-black text-[10px] uppercase mb-1">Fluency</p>
+                <p className="text-2xl md:text-5xl font-black text-orange-700">{fluencyScore}%</p>
               </div>
-              <div className="bg-blue-50 px-10 py-8 rounded-[3rem] border-2 border-blue-100">
-                <p className="text-blue-600 font-black text-sm uppercase mb-2">Reward</p>
-                <p className="text-5xl font-black text-blue-700">+{fluencyScore * 10}</p>
+              <div className="bg-blue-50 px-6 py-4 md:px-10 md:py-8 rounded-2xl md:rounded-[3rem] border-2 border-blue-100">
+                <p className="text-blue-600 font-black text-[10px] uppercase mb-1">Reward</p>
+                <p className="text-2xl md:text-5xl font-black text-blue-700">+{fluencyScore * 10}</p>
               </div>
             </div>
 
             <button 
               onClick={() => window.location.reload()} 
-              className="w-full bg-slate-900 text-white py-6 rounded-[2rem] font-black text-2xl shadow-lg hover:bg-black transition-all mb-6"
+              className="w-full bg-slate-900 text-white py-4 md:py-6 rounded-2xl md:rounded-[2rem] font-black text-lg md:text-2xl shadow-lg active:bg-black"
             >
               Try Another Topic
             </button>
@@ -297,8 +300,8 @@ export default function ConversationPractice() {
         )}
       </main>
 
-      <footer className="text-center mt-10">
-        <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Ghanem Academy © All Rights Reserved</p>
+      <footer className="text-center mt-6 px-4">
+        <p className="text-slate-400 font-bold uppercase tracking-widest text-[9px]">Ghanem Academy © All Rights Reserved</p>
       </footer>
     </div>
   );
